@@ -17,4 +17,8 @@
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+struct Model;  // forward declaration
+
+void EnableButtonsOnModel(Model *m);
+
 #endif // system_h

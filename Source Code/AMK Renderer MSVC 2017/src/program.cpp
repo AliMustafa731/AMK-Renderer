@@ -75,7 +75,9 @@ void Program::init(const char* name, int _w, int _h)
     lookAt(Vector3(0, 0, 5), Vector3(0, 0, 0), Vector3(0, 1, 0));
     object.position = Vector3(0.0, 0.0, 0.0);
     object.model = &main_model;
+
     loadFromOBJFile("brick.obj", &main_model);
+	EnableButtonsOnModel(&main_model);
 }
 
 void frameRateLimit(); // forward declaration

@@ -118,37 +118,4 @@ void drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& 
     }
 }
 
-void Triangulate(int* points, int num ,std::vector<Face> &dest) // sampling polygonal faces into triangles
-{
-    if(num == 3) // it's a triangle !!!
-    {
-        Face f;
-        for(int h = 0 ; h < 3 ; h++)
-        {
-            f.v[h] = points[(h*3)];
-            f.t[h] = points[(h*3)+1];
-            f.n[h] = points[(h*3)+2];
-        }
-        dest.push_back(f);
-    }
-    else if(num == 4) // quad face
-    {
-        Face f1, f2;
-
-        for(int h = 0 ; h < 3 ; h++)
-        {
-            f1.v[h] = points[(h*3)];
-            f1.t[h] = points[(h*3)+1];
-            f1.n[h] = points[(h*3)+2];
-        }
-
-        f2.v[0] = points[2*3];  f2.t[0] = points[(2*3)+1];  f2.n[0] = points[(2*3)+2];
-        f2.v[1] = points[3*3];  f2.t[1] = points[(3*3)+1];  f2.n[1] = points[(3*3)+2];
-        f2.v[2] = points[0];    f2.t[2] = points[1];        f2.n[2] = points[2];
-
-        dest.push_back(f1);
-        dest.push_back(f2);
-    }
-}
-
 

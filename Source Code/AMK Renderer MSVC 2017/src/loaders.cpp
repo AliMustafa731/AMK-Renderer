@@ -9,25 +9,129 @@
 #include <sstream>
 
 
+struct Vertex
+{
+	int vert, uv, norm;
+
+	Vertex(){}
+};
+
+
+void Triangulate(Vertex* points, int count, std::vector<Face> &dest) // sampling polygonal faces into triangles
+{
+	if (count > 4)
+	{
+		// TODO : apply triangulation algorithm
+	}
+	else if (count == 3) // triangle, no need for sampling
+	{
+		Face f;
+		for (int h = 0; h < 3; h++)
+		{
+			f.v[h] = points[h].vert;
+			f.t[h] = points[h].uv;
+			f.n[h] = points[h].norm;
+		}
+		dest.push_back(f);
+	}
+	else if (count == 4) // quad face
+	{
+		Face f1, f2;
+
+		for (int h = 0; h < 3; h++)
+		{
+			f1.v[h] = points[h].vert;
+			f1.t[h] = points[h].uv;
+			f1.n[h] = points[h].norm;
+		}
+
+		f2.v[0] = points[2].vert;  f2.t[0] = points[2].uv;  f2.n[0] = points[2].norm;
+		f2.v[1] = points[3].vert;  f2.t[1] = points[3].uv;  f2.n[1] = points[3].norm;
+		f2.v[2] = points[0].vert;  f2.t[2] = points[0].uv;  f2.n[2] = points[0].norm;
+
+		dest.push_back(f1);
+		dest.push_back(f2);
+	}
+}
+
+
 void loadFromOBJFile(const char* filename, Model *m)
 {
+	// open the file and read it into a single string
     std::ifstream file;
+	std::string file_contents;
+
     file.open(filename, std::ifstream::in);
 
-    if (file.fail())
-    {
-        return;
-    }
+	if (file.fail()) { return; }
 
-    m->nm_tangent = false;
-    m->flat_shading = false;
-    FrameBuffer normals_texture;
-    std::string line;
-    int points[128 * 3]; // temporary storage for points indices
+	file.seekg(0, std::ios::end);
+	int length = file.tellg();
+	file.seekg(0, std::ios::beg);
 
-    while (!file.eof()) // loading and processing the file
+	file_contents.resize(length);
+	file.read(&file_contents[0], length);
+
+	file.close();
+
+	std::stringstream s_file(file_contents);
+	std::string line;
+
+	// recording the number of elements to later reserve memory for them
+	int numVertices = 0;
+	int numUV = 0;
+	int numNorms = 0;
+	int numFaces = 0;
+
+	while (std::getline(s_file, line))
+	{
+		if (!line.compare(0, 2, "v ")) // vertex
+		{
+			numVertices += 1;
+		}
+		else if (!line.compare(0, 3, "vn ")) // normal vector
+		{
+			numNorms += 1;
+		}
+		else if (!line.compare(0, 3, "vt ")) // uv
+		{
+			numUV += 1;
+		}
+		else if (!line.compare(0, 2, "f ")) // face
+		{
+			int numNodes = 0;
+
+			char trash;  int x;
+			std::istringstream ss(line.c_str());
+
+			ss >> trash;
+
+			while (ss >> x >> trash >> x >> trash >> x)
+			{
+				numNodes += 1;
+			}
+
+			numFaces += numNodes - 2; // (number of triangle faces) = (number of vertices - 2)
+		}
+	}
+
+	// reserve memory
+	m->vertices.reserve(numVertices);
+	m->uv.reserve(numUV);
+	m->normals.reserve(numNorms);
+	m->faces.reserve(numFaces);
+
+	m->nm_tangent = false;
+	m->flat_shading = false;
+	FrameBuffer normals_texture;
+	Vertex points[128]; // temporary storage for points indices
+
+	// processing the file
+	s_file.clear();
+	s_file.seekg(0, std::ios::beg);
+
+    while (std::getline(s_file, line))
     {
-        std::getline(file, line);
         std::istringstream iss(line.c_str());
         char trash;
 
@@ -55,18 +159,18 @@ void loadFromOBJFile(const char* filename, Model *m)
         else if (!line.compare(0, 2, "f ")) // face
         {
             iss >> trash;
-            int v, t, n, k = 0;
+            int vert, uv, norm, count = 0;
 
-            while (iss >> v >> trash >> t >> trash >> n)
+            while (iss >> vert >> trash >> uv >> trash >> norm)
             {
                 // indices start from 1 in .obj format, so subtract 1 from each index
-                points[(k * 3)] = v - 1;
-                points[(k * 3) + 1] = t - 1;
-                points[(k * 3) + 2] = n - 1;
-                k++;
+                points[count].vert = vert - 1;
+                points[count].uv = uv - 1;
+                points[count].norm = norm - 1;
+				count++;
             }
 
-            Triangulate(points, k, m->faces);
+            Triangulate(points, count, m->faces);
         }
         else if (!line.compare(0, 8, "texture ")) // path to texture file
         {
@@ -107,14 +211,13 @@ void loadFromOBJFile(const char* filename, Model *m)
             m->flat_shading = true;
         }
     }
-    file.close();
 
     normalize(m);
     SmoothImage(m->texture);
     SmoothImage(normals_texture);
 
     // convert texture pixels to Vector3 array
-    // convert vector coordinates range from [0, 255] into [-1, 1]
+    // change the range from [0, 255] into [-1, 1]
     if (normals_texture.data != NULL)
     {
         m->normals_map.init(normals_texture.width, normals_texture.height);
@@ -122,22 +225,20 @@ void loadFromOBJFile(const char* filename, Model *m)
         for (int i = 0; i < normals_texture.size; i++)
         {
             Vector3 _n;
-            _n = Vector3((float)normals_texture[i].r / 255.0,
+            _n = Vector3
+			(
+				(float)normals_texture[i].r / 255.0,
                 (float)normals_texture[i].g / 255.0,
-                (float)normals_texture[i].b / 255.0);
+                (float)normals_texture[i].b / 255.0
+			);
             _n = Vector3((_n.x * 2.0) - 1.0, (_n.y * 2.0) - 1.0, (_n.z * 2.0) - 1.0);
             m->normals_map[i] = normalize(_n);
         }
 
         normals_texture.release();
     }
-
-    // Enabling & Disabling controls depending on which textures the model has
-    EnableWindow(GetDlgItem(main_program->win_handle, ID_TEXTURE_MAPPING), (m->texture.data != NULL));
-    EnableWindow(GetDlgItem(main_program->win_handle, ID_NORMAL_MAPPING), (m->normals_map.data != NULL));
-    EnableWindow(GetDlgItem(main_program->win_handle, ID_SPECULAR_MAPPING), (m->specular.data != NULL));
-    EnableWindow(GetDlgItem(main_program->win_handle, ID_FLAT_SHADING), (!m->flat_shading));
 }
+
 
 int loadImageData(const char* filename, FrameBuffer &buffer)
 {
@@ -164,6 +265,7 @@ int loadImageData(const char* filename, FrameBuffer &buffer)
 
     return 1;
 }
+
 
 int SaveImageData(const char* filename, FrameBuffer &buffer)
 {

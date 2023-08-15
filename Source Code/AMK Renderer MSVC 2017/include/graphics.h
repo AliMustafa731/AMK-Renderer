@@ -84,11 +84,6 @@ struct Model
     {
         nm_tangent = false;
         flat_shading = false;
-
-        vertices.reserve(1024);
-        normals.reserve(1024);
-        uv.reserve(1024);
-        faces.reserve(1024);
     }
 
     void release();
@@ -138,8 +133,6 @@ void SmoothImage(FrameBuffer &buffer);
 void drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
 
 void drawTriangle(Vector3* v, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
-
-void Triangulate(int* points, int num ,std::vector<Face> &dest);
 
 
 #endif // graphics_h
