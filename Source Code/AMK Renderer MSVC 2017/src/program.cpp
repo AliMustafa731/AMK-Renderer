@@ -77,7 +77,7 @@ void Program::init(const char* name, int _w, int _h)
     object.model = &main_model;
 
     loadFromOBJFile("brick.obj", &main_model);
-	EnableButtonsOnModel(&main_model);
+    EnableButtonsOnModel(&main_model);
 }
 
 void frameRateLimit(); // forward declaration

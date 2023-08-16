@@ -5,4 +5,5 @@
 !*.vcxproj
 !*.vcxproj.user
 !*.vcxproj.filters
+!README.md
 !.gitignore

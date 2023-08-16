@@ -11,124 +11,124 @@
 
 struct Vertex
 {
-	int vert, uv, norm;
+    int vert, uv, norm;
 
-	Vertex(){}
+    Vertex(){}
 };
 
 
 void Triangulate(Vertex* points, int count, std::vector<Face> &dest) // sampling polygonal faces into triangles
 {
-	if (count > 4)
-	{
-		// TODO : apply triangulation algorithm
-	}
-	else if (count == 3) // triangle, no need for sampling
-	{
-		Face f;
-		for (int h = 0; h < 3; h++)
-		{
-			f.v[h] = points[h].vert;
-			f.t[h] = points[h].uv;
-			f.n[h] = points[h].norm;
-		}
-		dest.push_back(f);
-	}
-	else if (count == 4) // quad face
-	{
-		Face f1, f2;
+    if (count > 4)
+    {
+        // TODO : apply triangulation algorithm
+    }
+    else if (count == 3) // triangle, no need for sampling
+    {
+        Face f;
+        for (int h = 0; h < 3; h++)
+        {
+            f.v[h] = points[h].vert;
+            f.t[h] = points[h].uv;
+            f.n[h] = points[h].norm;
+        }
+        dest.push_back(f);
+    }
+    else if (count == 4) // quad face
+    {
+        Face f1, f2;
 
-		for (int h = 0; h < 3; h++)
-		{
-			f1.v[h] = points[h].vert;
-			f1.t[h] = points[h].uv;
-			f1.n[h] = points[h].norm;
-		}
+        for (int h = 0; h < 3; h++)
+        {
+            f1.v[h] = points[h].vert;
+            f1.t[h] = points[h].uv;
+            f1.n[h] = points[h].norm;
+        }
 
-		f2.v[0] = points[2].vert;  f2.t[0] = points[2].uv;  f2.n[0] = points[2].norm;
-		f2.v[1] = points[3].vert;  f2.t[1] = points[3].uv;  f2.n[1] = points[3].norm;
-		f2.v[2] = points[0].vert;  f2.t[2] = points[0].uv;  f2.n[2] = points[0].norm;
+        f2.v[0] = points[2].vert;  f2.t[0] = points[2].uv;  f2.n[0] = points[2].norm;
+        f2.v[1] = points[3].vert;  f2.t[1] = points[3].uv;  f2.n[1] = points[3].norm;
+        f2.v[2] = points[0].vert;  f2.t[2] = points[0].uv;  f2.n[2] = points[0].norm;
 
-		dest.push_back(f1);
-		dest.push_back(f2);
-	}
+        dest.push_back(f1);
+        dest.push_back(f2);
+    }
 }
 
 
 void loadFromOBJFile(const char* filename, Model *m)
 {
-	// open the file and read it into a single string
+    // open the file and read it into a single string
     std::ifstream file;
-	std::string file_contents;
+    std::string file_contents;
 
     file.open(filename, std::ifstream::in);
 
-	if (file.fail()) { return; }
+    if (file.fail()) { return; }
 
-	file.seekg(0, std::ios::end);
-	int length = file.tellg();
-	file.seekg(0, std::ios::beg);
+    file.seekg(0, std::ios::end);
+    int length = file.tellg();
+    file.seekg(0, std::ios::beg);
 
-	file_contents.resize(length);
-	file.read(&file_contents[0], length);
+    file_contents.resize(length);
+    file.read(&file_contents[0], length);
 
-	file.close();
+    file.close();
 
-	std::stringstream s_file(file_contents);
-	std::string line;
+    std::stringstream s_file(file_contents);
+    std::string line;
 
-	// recording the number of elements to later reserve memory for them
-	int numVertices = 0;
-	int numUV = 0;
-	int numNorms = 0;
-	int numFaces = 0;
+    // recording the number of elements to later reserve memory for them
+    int numVertices = 0;
+    int numUV = 0;
+    int numNorms = 0;
+    int numFaces = 0;
 
-	while (std::getline(s_file, line))
-	{
-		if (!line.compare(0, 2, "v ")) // vertex
-		{
-			numVertices += 1;
-		}
-		else if (!line.compare(0, 3, "vn ")) // normal vector
-		{
-			numNorms += 1;
-		}
-		else if (!line.compare(0, 3, "vt ")) // uv
-		{
-			numUV += 1;
-		}
-		else if (!line.compare(0, 2, "f ")) // face
-		{
-			int numNodes = 0;
+    while (std::getline(s_file, line))
+    {
+        if (!line.compare(0, 2, "v ")) // vertex
+        {
+            numVertices += 1;
+        }
+        else if (!line.compare(0, 3, "vn ")) // normal vector
+        {
+            numNorms += 1;
+        }
+        else if (!line.compare(0, 3, "vt ")) // uv
+        {
+            numUV += 1;
+        }
+        else if (!line.compare(0, 2, "f ")) // face
+        {
+            int numNodes = 0;
 
-			char trash;  int x;
-			std::istringstream ss(line.c_str());
+            char trash;  int x;
+            std::istringstream ss(line.c_str());
 
-			ss >> trash;
+            ss >> trash;
 
-			while (ss >> x >> trash >> x >> trash >> x)
-			{
-				numNodes += 1;
-			}
+            while (ss >> x >> trash >> x >> trash >> x)
+            {
+                numNodes += 1;
+            }
 
-			numFaces += numNodes - 2; // (number of triangle faces) = (number of vertices - 2)
-		}
-	}
+            numFaces += numNodes - 2; // (number of triangle faces) = (number of vertices - 2)
+        }
+    }
 
-	// reserve memory
-	m->vertices.reserve(numVertices);
-	m->uv.reserve(numUV);
-	m->normals.reserve(numNorms);
-	m->faces.reserve(numFaces);
+    // reserve memory
+    m->vertices.reserve(numVertices);
+    m->uv.reserve(numUV);
+    m->normals.reserve(numNorms);
+    m->faces.reserve(numFaces);
 
-	m->nm_tangent = false;
-	m->flat_shading = false;
-	FrameBuffer normals_texture;
-	Vertex points[128]; // temporary storage for points indices
+    m->nm_tangent = false;
+    m->flat_shading = false;
+    FrameBuffer normals_texture;
+    Vertex points[128]; // temporary storage for points indices
 
-	// processing the file
-	s_file.clear();
-	s_file.seekg(0, std::ios::beg);
+    // processing the file
+    s_file.clear();
+    s_file.seekg(0, std::ios::beg);
 
     while (std::getline(s_file, line))
     {
@@ -167,7 +167,7 @@ void loadFromOBJFile(const char* filename, Model *m)
                 points[count].vert = vert - 1;
                 points[count].uv = uv - 1;
                 points[count].norm = norm - 1;
-				count++;
+                count++;
             }
 
             Triangulate(points, count, m->faces);
@@ -226,11 +226,11 @@ void loadFromOBJFile(const char* filename, Model *m)
         {
             Vector3 _n;
             _n = Vector3
-			(
-				(float)normals_texture[i].r / 255.0,
+            (
+                (float)normals_texture[i].r / 255.0,
                 (float)normals_texture[i].g / 255.0,
                 (float)normals_texture[i].b / 255.0
-			);
+            );
             _n = Vector3((_n.x * 2.0) - 1.0, (_n.y * 2.0) - 1.0, (_n.z * 2.0) - 1.0);
             m->normals_map[i] = normalize(_n);
         }

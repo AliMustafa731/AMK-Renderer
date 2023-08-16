@@ -71,11 +71,11 @@ char file_name[512];
 
 void EnableButtonsOnModel(Model *m)
 {
-	// Enabling & Disabling controls depending on which textures the model has
-	EnableWindow(GetDlgItem(main_program->win_handle, ID_TEXTURE_MAPPING), (m->texture.data != NULL));
-	EnableWindow(GetDlgItem(main_program->win_handle, ID_NORMAL_MAPPING), (m->normals_map.data != NULL));
-	EnableWindow(GetDlgItem(main_program->win_handle, ID_SPECULAR_MAPPING), (m->specular.data != NULL));
-	EnableWindow(GetDlgItem(main_program->win_handle, ID_FLAT_SHADING), (!m->flat_shading));
+    // Enabling & Disabling controls depending on which textures the model has
+    EnableWindow(GetDlgItem(main_program->win_handle, ID_TEXTURE_MAPPING), (m->texture.data != NULL));
+    EnableWindow(GetDlgItem(main_program->win_handle, ID_NORMAL_MAPPING), (m->normals_map.data != NULL));
+    EnableWindow(GetDlgItem(main_program->win_handle, ID_SPECULAR_MAPPING), (m->specular.data != NULL));
+    EnableWindow(GetDlgItem(main_program->win_handle, ID_FLAT_SHADING), (!m->flat_shading));
 }
 
 void EnableAllButtons(bool state)
@@ -96,7 +96,7 @@ void load_model_thread(void *args)
     loadFromOBJFile(file_name, &main_model);
 
     EnableAllButtons(true);
-	EnableButtonsOnModel(&main_model);
+    EnableButtonsOnModel(&main_model);
     main_program->is_loading = false;
 }
 
