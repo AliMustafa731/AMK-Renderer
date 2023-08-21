@@ -32,7 +32,7 @@ void Matrix4::set_row(int _i, Vector4 v)
     m[3][_i] = v.w;
 }
 
-Vector3 TransformVector(Vector3 v, Matrix3 m)
+Vector3 transform(Vector3 v, Matrix3 m)
 {
     Vector3 a;
 
@@ -42,7 +42,7 @@ Vector3 TransformVector(Vector3 v, Matrix3 m)
 
     return a;
 }
-Vector4 TransformVector(Vector4 v, Matrix4 m)
+Vector4 transform(Vector4 v, Matrix4 m)
 {
     Vector4 a;
 
@@ -76,7 +76,7 @@ Matrix3 IdentityMatrix()
     return _m;
 }
 
-Matrix3 MultiplyMatrix(Matrix3 m1, Matrix3 m2)
+Matrix3 mul_matrix(Matrix3 m1, Matrix3 m2)
 {
     Matrix3 _m;
 
@@ -95,7 +95,7 @@ Matrix3 MultiplyMatrix(Matrix3 m1, Matrix3 m2)
 
     return _m;
 }
-Matrix4 MultiplyMatrix(Matrix4 m1, Matrix4 m2)
+Matrix4 mul_matrix(Matrix4 m1, Matrix4 m2)
 {
     Matrix4 _m;
 
@@ -124,7 +124,7 @@ Vector3 barycentric(Vector3* v, Vector2i p)
     r.x = r.x / r.z; // normalize
     r.y = r.y / r.z; // normalize
 
-    return Vector3(1.0-r.x-r.y, r.y, r.x);
+    return Vector3(1.0f-r.x-r.y, r.y, r.x);
 }
 
 Matrix3 TangentBasis(Vector3 *tri, Vector2 *uv, Vector3 n)
@@ -136,8 +136,8 @@ Matrix3 TangentBasis(Vector3 *tri, Vector2 *uv, Vector3 n)
     A.set_row(2, n);
     A = inverse(A);
 
-    Vector3 i = TransformVector(Vector3(uv[1].x - uv[0].x, uv[2].x - uv[0].x, 0), A);
-    Vector3 j = TransformVector(Vector3(uv[1].y - uv[0].y, uv[2].y - uv[0].y, 0), A);
+    Vector3 i = transform(Vector3(uv[1].x - uv[0].x, uv[2].x - uv[0].x, 0), A);
+    Vector3 j = transform(Vector3(uv[1].y - uv[0].y, uv[2].y - uv[0].y, 0), A);
 
     B.set_col(0, normalize(i));
     B.set_col(1, normalize(j));

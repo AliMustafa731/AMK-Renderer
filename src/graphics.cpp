@@ -42,15 +42,15 @@ void SmoothImage(FrameBuffer &buffer)
     {
         for(int j = 1 ; j < buffer.height - 1 ; j++)
         {
-            Color center      = buffer[(i) + (j)*buffer.width];
-            Color up          = buffer[(i) + (j+1)*buffer.width];
-            Color down        = buffer[(i) + (j-1)*buffer.width];
-            Color right       = buffer[(i+1) + (j)*buffer.width];
-            Color left        = buffer[(i-1) + (j)*buffer.width];
-            Color up_left     = buffer[(i-1) + (j+1)*buffer.width];
-            Color up_right    = buffer[(i+1) + (j+1)*buffer.width];
-            Color down_left   = buffer[(i-1) + (j-1)*buffer.width];
-            Color down_right  = buffer[(i+1) + (j-1)*buffer.width];
+            Color center      = buffer(i, j);
+            Color up          = buffer(i, j + 1);
+            Color down        = buffer(i, j - 1);
+            Color right       = buffer(i + 1, j);
+            Color left        = buffer(i - 1, j);
+            Color up_left     = buffer(i - 1, j + 1);
+            Color up_right    = buffer(i + 1, j + 1);
+            Color down_left   = buffer(i - 1, j - 1);
+            Color down_right  = buffer(i + 1, j - 1);
 
             int _idx = i + j*buffer.width;
             _temp[_idx].r = center.r/2 + (up.r+down.r+right.r+left.r + up_left.r+up_right.r+down_left.r+down_right.r)/16;

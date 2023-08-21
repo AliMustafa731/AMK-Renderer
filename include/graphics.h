@@ -12,22 +12,20 @@ struct Color
     Color(){}
     Color(unsigned char _r, unsigned char _g, unsigned char _b)
     {
-        r = _r;
-        g = _g;
-        b = _b;
+        r = _r;  g = _g;  b = _b;
     }
 };
 
 template<typename T> struct Buffer
 {
-    size_t width, height, size;
+	int width, height, size;
     T *data;
 
-    inline T operator[](size_t i) const { return data[i]; }
-    inline T &operator[](size_t i)      { return data[i]; }
+    inline T operator[](int i) const { return data[i]; }
+    inline T &operator[](int i)      { return data[i]; }
 
-    inline T operator()(size_t x, size_t y) const { return data[x + y * width]; }
-    inline T &operator()(size_t x, size_t y)      { return data[x + y * width]; }
+    inline T operator()(int x, int y) const { return data[x + y * width]; }
+    inline T &operator()(int x, int y)      { return data[x + y * width]; }
 
     void init(int w, int h)
     {

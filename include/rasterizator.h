@@ -5,7 +5,6 @@
 #include "geometry.h"
 
 
-extern Vector3 camera;
 extern Vector3 camera_offset;
 extern Matrix3 camera_matrix;
 extern float focal_length;

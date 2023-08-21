@@ -63,9 +63,9 @@ void Program::init(const char* name, int _w, int _h)
     for(int i = 0 ; i < screen.size ; i++)
     {
         int y = i / width;
-        float x = (float)y / height;
-        unsigned char a = 40 + 160 * x;
-        Color c(a, a, a);
+        float t = (float)y / height;
+        unsigned char x = (unsigned char)(40.f + 160.0f * t);
+        Color c(x, x, x);
         background[i] = c;
         screen[i] = c;
         zbuffer[i] = -FLT_MAX;  // set to a small value
@@ -139,7 +139,7 @@ void Program::update()
         if(angle_y > 6.283) angle_y = 0;
         if(angle_x > 6.283) angle_x = 0;
 
-        camera_matrix = MultiplyMatrix(rotation_y(angle_y), rotation_x(angle_x));
+        camera_matrix = mul_matrix(rotation_y(angle_y), rotation_x(angle_x));
         clearScreen();
 
         draw(object, screen, zbuffer);

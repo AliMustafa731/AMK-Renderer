@@ -11,7 +11,7 @@ Vector3 screen_offset;
 Matrix3 tangent_basis;
 
 int view_scale = 100;
-float focal_length = 5.0;
+float focal_length = 5.0f;
 
 // control & state flags
 bool e_render_mode = true;   // when "false", only render the wire-frame
@@ -26,7 +26,7 @@ bool _normal_mapping;
 bool _specular_mapping;
 bool _flat_shading;
 
-Vector3 light_src(0.4, -0.25, 5.0);
+Vector3 light_src(0.4f, -0.25f, 5.0f);
 Vector3 tri[3], tri_projected[3], tri_screen[3];
 Vector3 var_norm[3], n;
 Vector2 var_uv[3], uv;
@@ -49,9 +49,7 @@ __forceinline Vector3 projection(Vector3 v)
 
     if (_w != 0.0)
     {
-        _v.x = v.x / _w;
-        _v.y = v.y / _w;
-        _v.z = v.z / _w;
+		_v = div(v, _w);
     }
     return _v;
 }
@@ -64,7 +62,7 @@ __forceinline bool VertexShader(Object &o, FrameBuffer &buffer, ZBuffer& zbuffer
     {
         Vector3 vertex = o.model->Vertex(face_index, k);
 
-        tri[k] = TransformVector(vertex, camera_matrix);
+        tri[k] = transform(vertex, camera_matrix);
         tri[k] = add(tri[k], o.position);
         tri[k] = sub(tri[k], camera_offset);
 
@@ -95,7 +93,7 @@ __forceinline bool VertexShader(Object &o, FrameBuffer &buffer, ZBuffer& zbuffer
 
         if (!_flat_shading)
         {
-            var_norm[h] = normalize(TransformVector(o.model->Normal(face_index, h), camera_matrix));
+            var_norm[h] = normalize(transform(o.model->Normal(face_index, h), camera_matrix));
         }
 
         // optimization : computing tangent basis for "flat shading"
@@ -151,11 +149,11 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
         {
             if (!_flat_shading) { tangent_basis = TangentBasis(tri, var_uv, n); }
 
-            n = normalize(TransformVector(o.model->normals_map(_x, _y), tangent_basis));
+            n = normalize(transform(o.model->normals_map(_x, _y), tangent_basis));
         }
         else // object space normal mapping
         {
-            n = normalize(TransformVector(o.model->normals_map(_x, _y), camera_matrix));
+            n = normalize(transform(o.model->normals_map(_x, _y), camera_matrix));
         }
     }
 
@@ -230,26 +228,21 @@ void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer, int face_in
         for (p.y = rect.y; p.y <= rect.h; p.y++)
         {
             bc_screen = barycentric(tri_screen, p);
-            bc_world = Vector3(bc_screen.x / _w[0], bc_screen.y / _w[1], bc_screen.z / _w[2]); // apply perspective deformation
 
             if (bc_screen.x <= 0 || bc_screen.y <= 0 || bc_screen.z <= 0)
             {
                 continue;  // pixel is outside the triangle, ignore it
             }
 
-            // normalize by dividing each component by the sum
-            // since the sum of the three coefficients should be 1
-            float _sum = bc_world.x + bc_world.y + bc_world.z;
-
-            bc_world = mul(bc_world, 1.0f / _sum);
+			bc_world = Vector3(bc_screen.x / _w[0], bc_screen.y / _w[1], bc_screen.z / _w[2]); // apply perspective deformation
+			bc_world = div(bc_world, (bc_world.x + bc_world.y + bc_world.z)); // normalize, divide by the sum
 
             float _z = tri_screen[0].z*bc_screen.x + tri_screen[1].z*bc_screen.y + tri_screen[2].z*bc_screen.z;
+            int idx = p.x + p.y*z_buffer.width;
 
-            int _idx = p.x + p.y*z_buffer.width;
-
-            if (_z > z_buffer[_idx])
+            if (_z > z_buffer[idx])
             {
-                z_buffer[_idx] = _z;
+                z_buffer[idx] = _z;
 
                 Color c = FragmentShader(o, bc_world);
 
@@ -262,8 +255,6 @@ void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer, int face_in
 
 void lookAt(Vector3 eye, Vector3 center, Vector3 up)
 {
-    camera = eye;
-
     eye.x = -eye.x;
     eye.y = -eye.y;
 
