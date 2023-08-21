@@ -2,6 +2,7 @@
 #define graphics_h
 
 #include "geometry.h"
+#include "array.h"
 #include <vector>
 
 
@@ -16,88 +17,47 @@ struct Color
     }
 };
 
-template<typename T> struct Buffer
-{
-	int width, height, size;
-    T *data;
-
-    inline T operator[](int i) const { return data[i]; }
-    inline T &operator[](int i)      { return data[i]; }
-
-    inline T operator()(int x, int y) const { return data[x + y * width]; }
-    inline T &operator()(int x, int y)      { return data[x + y * width]; }
-
-    void init(int w, int h)
-    {
-        width = w;
-        height = h;
-        size = w*h;
-        data = new T[size];
-    }
-
-    void release()
-    {
-        if(data != NULL)
-        {
-            delete[] data;
-            data = NULL;
-        }
-    }
-
-    Buffer()
-    {
-        width = 0;
-        height = 0;
-        size = 0;
-        data = NULL;
-    }
-
-    Buffer(int w, int h) { init(w, h); }
-};
-
 typedef Buffer<Color> FrameBuffer;
 typedef Buffer<float> ZBuffer;
 
+struct Triangle
+{
+    Vector3 vert[3];
+    Vector2 uv[3];
+    Vector3 norm[3];
+
+    Triangle(){}
+};
+
+struct VertexInfo
+{
+    int vert, uv, norm; // index
+
+    VertexInfo(){}
+};
+
 struct Face
 {
-    int v[3]; // vertices index
-    int t[3]; // uv index
-    int n[3]; // vertex normals index
+    VertexInfo v[3];
 
     Face(){}
+
+    inline VertexInfo operator[](int i) const { return v[i]; }
+    inline VertexInfo &operator[](int i)      { return v[i]; }
 };
 
 struct Model
 {
-    std::vector<Vector3> vertices;
-    std::vector<Vector3> normals;
-    std::vector<Vector2> uv;
-    std::vector<Face>    faces;
-    Buffer<Color> texture;
-    Buffer<Color> specular;
-    Buffer<Vector3> normals_map; // normals map
-    bool nm_tangent, flat_shading; // useful flags
-
-    Model()
-    {
-        nm_tangent = false;
-        flat_shading = false;
-    }
+    Array<Triangle> triangles;
+    Buffer<Color> texture_map;
+    Buffer<Color> specular_map;
+    Buffer<Vector3> normals_map;
+    // useful flags
+    bool nm_tangent, flat_shading;
 
     void release();
 
-    inline Vector3 Vertex(int face_index, int vertex_index)
-    {
-        return vertices[faces[face_index].v[vertex_index]];
-    }
-    inline Vector3 Normal(int face_index, int normal_index)
-    {
-        return normals[faces[face_index].n[normal_index]];
-    }
-    inline Vector2 UV(int face_index, int uv_index)
-    {
-        return uv[faces[face_index].t[uv_index]];
-    }
+    Model() {}
 };
 
 struct Object
@@ -105,26 +65,11 @@ struct Object
     Vector3 position;
     Model* model;
 
-    Object()
-    {
-        model = NULL;
-    }
-
-    Object(Model* m)
-    {
-        model = m;
-    }
+    Object()         { model = NULL; }
+    Object(Model* m) { model = m;    }
 };
 
-__forceinline void drawPixel(int x, int y, Color _c, FrameBuffer& buffer)
-{
-    if (x < buffer.width && x >= 0 && y < buffer.height && y >= 0)
-    {
-        buffer(x, y) = _c;
-    }
-}
-
-void normalize(Model *m);
+void normalize(Array<Vector3> &mesh);
 
 void SmoothImage(FrameBuffer &buffer);
 

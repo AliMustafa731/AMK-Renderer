@@ -2,35 +2,31 @@
 #include "common.h"
 
 
-void normalize(Model *m)
+void Model::release()
 {
-    if(m == NULL) return;
+    this->texture_map.release();
+    this->specular_map.release();
+    this->normals_map.release();
+    this->triangles.release();
+}
+
+void normalize(Array<Vector3> &mesh)
+{
+    if (mesh.data == NULL) return;
 
     float max_length = 0;
 
-    for(int i = 0 ; i < m->vertices.size() ; i++)
+    for (int i = 0; i < mesh.size; i++)
     {
-        max_length = _max(max_length, length(m->vertices[i]));
+        max_length = _max(max_length, length(mesh[i]));
     }
-    for(int j = 0 ; j < m->vertices.size() ; j++)
+    for (int j = 0; j < mesh.size; j++)
     {
-        m->vertices[j].x = m->vertices[j].x / max_length;
-        m->vertices[j].y = m->vertices[j].y / max_length;
-        m->vertices[j].z = m->vertices[j].z / max_length;
+        mesh[j].x = mesh[j].x / max_length;
+        mesh[j].y = mesh[j].y / max_length;
+        mesh[j].z = mesh[j].z / max_length;
     }
 }
-
-void Model::release()
-{
-    this->texture.release();
-    this->specular.release();
-    this->normals_map.release();
-    this->vertices.clear();
-    this->uv.clear();
-    this->normals.clear();
-    this->faces.clear();
-}
-
 
 void SmoothImage(FrameBuffer &buffer)
 {
@@ -113,7 +109,7 @@ void drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& 
         if (z >= zbuffer(x, y) - 0.1f)
         {
             zbuffer(x, y) = z;
-            drawPixel(x, y, _c, buffer);
+            buffer(x, y) = _c;
         }
     }
 }

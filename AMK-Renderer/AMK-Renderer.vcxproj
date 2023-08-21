@@ -138,6 +138,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\include\array.h" />
     <ClInclude Include="..\include\common.h" />
     <ClInclude Include="..\include\geometry.h" />
     <ClInclude Include="..\include\graphics.h" />

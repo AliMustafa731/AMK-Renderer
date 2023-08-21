@@ -9,15 +9,7 @@
 #include <sstream>
 
 
-struct Vertex
-{
-    int vert, uv, norm;
-
-    Vertex(){}
-};
-
-
-void Triangulate(Vertex* points, int count, std::vector<Face> &dest) // sampling polygonal faces into triangles
+void Triangulate(VertexInfo* points, int count, Array<Face> &dest) // sampling polygonal faces into triangles
 {
     if (count > 4)
     {
@@ -26,31 +18,27 @@ void Triangulate(Vertex* points, int count, std::vector<Face> &dest) // sampling
     else if (count == 3) // triangle, no need for sampling
     {
         Face f;
-        for (int h = 0; h < 3; h++)
-        {
-            f.v[h] = points[h].vert;
-            f.t[h] = points[h].uv;
-            f.n[h] = points[h].norm;
-        }
-        dest.push_back(f);
+        
+        f.v[0] = points[0];
+        f.v[1] = points[1];
+        f.v[2] = points[2];
+
+        dest.add(f);
     }
     else if (count == 4) // quad face
     {
         Face f1, f2;
 
-        for (int h = 0; h < 3; h++)
-        {
-            f1.v[h] = points[h].vert;
-            f1.t[h] = points[h].uv;
-            f1.n[h] = points[h].norm;
-        }
+        f1.v[0] = points[0];
+        f1.v[1] = points[1];
+        f1.v[2] = points[2];
 
-        f2.v[0] = points[2].vert;  f2.t[0] = points[2].uv;  f2.n[0] = points[2].norm;
-        f2.v[1] = points[3].vert;  f2.t[1] = points[3].uv;  f2.n[1] = points[3].norm;
-        f2.v[2] = points[0].vert;  f2.t[2] = points[0].uv;  f2.n[2] = points[0].norm;
+        f2.v[0] = points[2];
+        f2.v[1] = points[3];
+        f2.v[2] = points[0];
 
-        dest.push_back(f1);
-        dest.push_back(f2);
+        dest.add(f1);
+        dest.add(f2);
     }
 }
 
@@ -116,15 +104,15 @@ void loadFromOBJFile(const char* filename, Model *m)
     }
 
     // reserve memory
-    m->vertices.reserve(numVertices);
-    m->uv.reserve(numUV);
-    m->normals.reserve(numNorms);
-    m->faces.reserve(numFaces);
+    Array<Vector3> vertices(numVertices);
+    Array<Vector3> normals(numNorms);
+    Array<Vector2> uvs(numUV);
+    Array<Face> faces(numFaces);
 
     m->nm_tangent = false;
     m->flat_shading = false;
     FrameBuffer normals_texture;
-    Vertex points[128]; // temporary storage for points indices
+    VertexInfo points[128]; // temporary storage for points indices
 
     // processing the file
     s_file.clear();
@@ -140,21 +128,21 @@ void loadFromOBJFile(const char* filename, Model *m)
             iss >> trash;
             Vector3 v;
             iss >> v.x >> v.y >> v.z;
-            m->vertices.push_back(v);
+            vertices.add(v);
         }
         else if (!line.compare(0, 3, "vn ")) // normal vector
         {
             iss >> trash >> trash;
             Vector3 n;
             iss >> n.x >> n.y >> n.z;
-            m->normals.push_back(n);
+            normals.add(n);
         }
         else if (!line.compare(0, 3, "vt ")) // uv
         {
             iss >> trash >> trash;
             Vector2 uv;
             iss >> uv.x >> uv.y;
-            m->uv.push_back(uv);
+            uvs.add(uv);
         }
         else if (!line.compare(0, 2, "f ")) // face
         {
@@ -170,13 +158,13 @@ void loadFromOBJFile(const char* filename, Model *m)
                 count++;
             }
 
-            Triangulate(points, count, m->faces);
+            Triangulate(points, count, faces);
         }
         else if (!line.compare(0, 8, "texture ")) // path to texture file
         {
             std::string a;
             iss >> a >> a;
-            if (!loadImageData(a.c_str(), m->texture))
+            if (!loadImageData(a.c_str(), m->texture_map))
             {
                 std::string msg = "can't load texture map \"" + a + "\"";
                 MessageBox(main_program->win_handle, msg.c_str(), "Error", MB_OK);
@@ -196,7 +184,7 @@ void loadFromOBJFile(const char* filename, Model *m)
         {
             std::string a;
             iss >> a >> a;
-            if (!loadImageData(a.c_str(), m->specular))
+            if (!loadImageData(a.c_str(), m->specular_map))
             {
                 std::string msg = "can't load specular map \"" + a + "\"";
                 MessageBox(main_program->win_handle, msg.c_str(), "Error", MB_OK);
@@ -212,9 +200,26 @@ void loadFromOBJFile(const char* filename, Model *m)
         }
     }
 
-    normalize(m);
-    SmoothImage(m->texture);
+    normalize(vertices);
+    SmoothImage(m->texture_map);
     SmoothImage(normals_texture);
+
+    m->triangles.init(faces.counter);
+
+    for (int i = 0; i < m->triangles.size; i++)
+    {
+        for (int j = 0; j < 3; j++)
+        {
+            m->triangles[i].vert[j] = vertices[faces[i].v[j].vert];
+            m->triangles[i].uv[j] = uvs[faces[i].v[j].uv];
+            m->triangles[i].norm[j] = normals[faces[i].v[j].norm];
+        }
+    }
+
+    vertices.release();
+    normals.release();
+    uvs.release();
+    faces.release();
 
     // convert texture pixels to Vector3 array
     // change the range from [0, 255] into [-1, 1]

@@ -20,7 +20,7 @@ extern bool e_wireframe;    // enable wire-frame
 
 void draw(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer);
 
-void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer, int face_index);
+void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer);
 
 void lookAt(Vector3 eye, Vector3 center, Vector3 up);
 

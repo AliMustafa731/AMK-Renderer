@@ -72,9 +72,9 @@ char file_name[512];
 void EnableButtonsOnModel(Model *m)
 {
     // Enabling & Disabling controls depending on which textures the model has
-    EnableWindow(GetDlgItem(main_program->win_handle, ID_TEXTURE_MAPPING), (m->texture.data != NULL));
+    EnableWindow(GetDlgItem(main_program->win_handle, ID_TEXTURE_MAPPING), (m->texture_map.data != NULL));
     EnableWindow(GetDlgItem(main_program->win_handle, ID_NORMAL_MAPPING), (m->normals_map.data != NULL));
-    EnableWindow(GetDlgItem(main_program->win_handle, ID_SPECULAR_MAPPING), (m->specular.data != NULL));
+    EnableWindow(GetDlgItem(main_program->win_handle, ID_SPECULAR_MAPPING), (m->specular_map.data != NULL));
     EnableWindow(GetDlgItem(main_program->win_handle, ID_FLAT_SHADING), (!m->flat_shading));
 }
 

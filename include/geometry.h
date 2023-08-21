@@ -7,9 +7,9 @@ template<typename T> struct Vec2
     T x, y;
 
     Vec2(T _x, T _y)
-	{
-		x = _x;  y = _y;
-	}
+    {
+        x = _x;  y = _y;
+    }
     Vec2(){}
 };
 
@@ -18,9 +18,9 @@ template<typename T> struct Vec3
     T x, y, z;
 
     Vec3(T _x, T _y, T _z)
-	{
-		x = _x;  y = _y;   z = _z;
-	}
+    {
+        x = _x;  y = _y;   z = _z;
+    }
     Vec3(){}
 };
 
@@ -29,9 +29,9 @@ template<typename T> struct Vec4
     T x, y, z, w;
 
     Vec4(T _x, T _y, T _z, T _w)
-	{
-		x = _x;  y = _y;  z = _z;  w = _w;
-	}
+    {
+        x = _x;  y = _y;  z = _z;  w = _w;
+    }
     Vec4(){}
 };
 

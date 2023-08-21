@@ -27,9 +27,10 @@ bool _specular_mapping;
 bool _flat_shading;
 
 Vector3 light_src(0.4f, -0.25f, 5.0f);
-Vector3 tri[3], tri_projected[3], tri_screen[3];
-Vector3 var_norm[3], n;
-Vector2 var_uv[3], uv;
+Triangle tri;
+Vector3 tri_projected[3], tri_screen[3];
+Vector3 n;
+Vector2 uv;
 float _w[3];
 
 Color  white(255, 255, 255);
@@ -49,25 +50,23 @@ __forceinline Vector3 projection(Vector3 v)
 
     if (_w != 0.0)
     {
-		_v = div(v, _w);
+        _v = div(v, _w);
     }
     return _v;
 }
 
-
-__forceinline bool VertexShader(Object &o, FrameBuffer &buffer, ZBuffer& zbuffer, int face_index) // when "true", it means this face should be ignored
+// return "true" to ignore current face
+__forceinline bool VertexShader(Object &o, FrameBuffer &buffer, ZBuffer& zbuffer)
 {
     // transformation and perspective projection
     for (int k = 0; k < 3; k++)
     {
-        Vector3 vertex = o.model->Vertex(face_index, k);
+        tri.vert[k] = transform(tri.vert[k], camera_matrix);
+        tri.vert[k] = add(tri.vert[k], o.position);
+        tri.vert[k] = sub(tri.vert[k], camera_offset);
 
-        tri[k] = transform(vertex, camera_matrix);
-        tri[k] = add(tri[k], o.position);
-        tri[k] = sub(tri[k], camera_offset);
-
-        tri_projected[k] = projection(tri[k]);
-        _w[k] = 1.0 - (tri[k].z / focal_length);
+        tri_projected[k] = projection(tri.vert[k]);
+        _w[k] = 1.0 - (tri.vert[k].z / focal_length);
     }
 
     // back-face removal
@@ -75,7 +74,7 @@ __forceinline bool VertexShader(Object &o, FrameBuffer &buffer, ZBuffer& zbuffer
 
     if (n.z < 0 && e_render_mode) return true; // the triangle is facing backward, ignore it
 
-    n = normalize(crossProduct(sub(tri[2], tri[0]), sub(tri[1], tri[0])));
+    n = normalize(crossProduct(sub(tri.vert[2], tri.vert[0]), sub(tri.vert[1], tri.vert[0])));
 
     // translating 3D points to the screen
     for (int h = 0; h < 3; h++)
@@ -86,20 +85,19 @@ __forceinline bool VertexShader(Object &o, FrameBuffer &buffer, ZBuffer& zbuffer
 
         if (_texture_mapping || _normal_mapping || _specular_mapping)
         {
-            var_uv[h] = o.model->UV(face_index, h);
-            var_uv[h].x = _max(0.0f, _min(1.0f, var_uv[h].x));
-            var_uv[h].y = _max(0.0f, _min(1.0f, var_uv[h].y));
+            tri.uv[h].x = _max(0.0f, _min(1.0f, tri.uv[h].x));
+            tri.uv[h].y = _max(0.0f, _min(1.0f, tri.uv[h].y));
         }
 
         if (!_flat_shading)
         {
-            var_norm[h] = normalize(transform(o.model->Normal(face_index, h), camera_matrix));
+            tri.norm[h] = normalize(transform(tri.norm[h], camera_matrix));
         }
 
         // optimization : computing tangent basis for "flat shading"
         if (_flat_shading && _normal_mapping && o.model->nm_tangent)
         {
-            tangent_basis = TangentBasis(tri, var_uv, n);
+            tangent_basis = TangentBasis(tri.vert, tri.uv, n);
         }
     }
 
@@ -120,24 +118,24 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
 
     if (!_flat_shading) // interpolated normal vectors
     {
-        n.x = var_norm[0].x*bc_world.x + var_norm[1].x*bc_world.y + var_norm[2].x*bc_world.z;
-        n.y = var_norm[0].y*bc_world.x + var_norm[1].y*bc_world.y + var_norm[2].y*bc_world.z;
-        n.z = var_norm[0].z*bc_world.x + var_norm[1].z*bc_world.y + var_norm[2].z*bc_world.z;
+        n.x = tri.norm[0].x*bc_world.x + tri.norm[1].x*bc_world.y + tri.norm[2].x*bc_world.z;
+        n.y = tri.norm[0].y*bc_world.x + tri.norm[1].y*bc_world.y + tri.norm[2].y*bc_world.z;
+        n.z = tri.norm[0].z*bc_world.x + tri.norm[1].z*bc_world.y + tri.norm[2].z*bc_world.z;
         n = normalize(n);
     }
 
     if (_texture_mapping || _normal_mapping || _specular_mapping) // uv mapping
     {
-        uv.x = var_uv[0].x*bc_world.x + var_uv[1].x*bc_world.y + var_uv[2].x*bc_world.z;
-        uv.y = var_uv[0].y*bc_world.x + var_uv[1].y*bc_world.y + var_uv[2].y*bc_world.z;
+        uv.x = tri.uv[0].x*bc_world.x + tri.uv[1].x*bc_world.y + tri.uv[2].x*bc_world.z;
+        uv.y = tri.uv[0].y*bc_world.x + tri.uv[1].y*bc_world.y + tri.uv[2].y*bc_world.z;
     }
 
     if (_texture_mapping) // texture mapping
     {
-        int _x = uv.x*(o.model->texture.width - 1);
-        int _y = uv.y*(o.model->texture.height - 1);
+        int _x = uv.x*(o.model->texture_map.width - 1);
+        int _y = uv.y*(o.model->texture_map.height - 1);
 
-        c = o.model->texture(_x, _y);
+        c = o.model->texture_map(_x, _y);
     }
 
     if (_normal_mapping) // normals mapping
@@ -147,7 +145,7 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
 
         if (o.model->nm_tangent) // tangent space normal mapping
         {
-            if (!_flat_shading) { tangent_basis = TangentBasis(tri, var_uv, n); }
+            if (!_flat_shading) { tangent_basis = TangentBasis(tri.vert, tri.uv, n); }
 
             n = normalize(transform(o.model->normals_map(_x, _y), tangent_basis));
         }
@@ -159,9 +157,9 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
 
     // current pixel in 3D space
     Vector3 point = Vector3(
-        tri[0].x*bc_world.x + tri[1].x*bc_world.y + tri[2].x*bc_world.z,
-        tri[0].y*bc_world.x + tri[1].y*bc_world.y + tri[2].y*bc_world.z,
-        tri[0].z*bc_world.x + tri[1].z*bc_world.y + tri[2].z*bc_world.z
+        tri.vert[0].x*bc_world.x + tri.vert[1].x*bc_world.y + tri.vert[2].x*bc_world.z,
+        tri.vert[0].y*bc_world.x + tri.vert[1].y*bc_world.y + tri.vert[2].y*bc_world.z,
+        tri.vert[0].z*bc_world.x + tri.vert[1].z*bc_world.y + tri.vert[2].z*bc_world.z
     );
 
     Vector3 l = normalize(sub(light_src, point)); // The vector from current pixel's point to the light source
@@ -171,10 +169,10 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
     {
         Vector3 r = normalize(sub(mul(n, dotProduct(n, l) * 2), l)); // reflected light
 
-        int _x = uv.x*(o.model->specular.width - 1);
-        int _y = uv.y*(o.model->specular.height - 1);
+        int _x = uv.x*(o.model->specular_map.width - 1);
+        int _y = uv.y*(o.model->specular_map.height - 1);
 
-        spec_intensity = (float)o.model->specular(_x, _y).r / 127.0;
+        spec_intensity = (float)o.model->specular_map(_x, _y).r / 127.0;
 
         spec = pow(_max(0, r.z), 10);
     }
@@ -192,21 +190,31 @@ void draw(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
     screen_offset.x = buffer.width / 2;
     screen_offset.y = buffer.height / 2;
 
-    _texture_mapping = (e_texture && o.model->texture.data != NULL);
+    _texture_mapping = (e_texture && o.model->texture_map.data != NULL);
     _normal_mapping = (e_normals && o.model->normals_map.data != NULL);
-    _specular_mapping = (e_specular && o.model->specular.data != NULL);
+    _specular_mapping = (e_specular && o.model->specular_map.data != NULL);
     _flat_shading = (e_flat_shading || o.model->flat_shading);
 
-    for (int i = 0; i < o.model->faces.size(); i++)
+    for (int i = 0; i < o.model->triangles.size; i++)
     {
-        if (VertexShader(o, buffer, z_buffer, i)) { continue; }
-        fillTriangle(o, buffer, z_buffer, i);
-        if (e_wireframe) { drawTriangle(tri_screen, white, buffer, z_buffer); }
+        tri = o.model->triangles[i];
+
+        if (VertexShader(o, buffer, z_buffer))
+        {
+            continue;  // ignore this triangle, (e.g. it's facing backward)
+        }
+
+        fillTriangle(o, buffer, z_buffer);
+
+        if (e_wireframe)
+        {
+            drawTriangle(tri_screen, white, buffer, z_buffer);
+        }
     }
 }
 
 
-void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer, int face_index)
+void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
 {
     // calculating the rectangle to draw pixels within
     Square rect(buffer.width - 1, buffer.height - 1, 0, 0);
@@ -234,8 +242,8 @@ void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer, int face_in
                 continue;  // pixel is outside the triangle, ignore it
             }
 
-			bc_world = Vector3(bc_screen.x / _w[0], bc_screen.y / _w[1], bc_screen.z / _w[2]); // apply perspective deformation
-			bc_world = div(bc_world, (bc_world.x + bc_world.y + bc_world.z)); // normalize, divide by the sum
+            bc_world = Vector3(bc_screen.x / _w[0], bc_screen.y / _w[1], bc_screen.z / _w[2]); // apply perspective deformation
+            bc_world = div(bc_world, (bc_world.x + bc_world.y + bc_world.z)); // normalize, divide by the sum
 
             float _z = tri_screen[0].z*bc_screen.x + tri_screen[1].z*bc_screen.y + tri_screen[2].z*bc_screen.z;
             int idx = p.x + p.y*z_buffer.width;
