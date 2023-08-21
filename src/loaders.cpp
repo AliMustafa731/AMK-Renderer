@@ -43,7 +43,7 @@ void Triangulate(VertexInfo* points, int count, Array<Face> &dest) // sampling p
 }
 
 
-void loadFromOBJFile(const char* filename, Model *m)
+bool loadFromOBJFile(const char* filename, Model *m)
 {
     // open the file and read it into a single string
     std::ifstream file;
@@ -51,7 +51,7 @@ void loadFromOBJFile(const char* filename, Model *m)
 
     file.open(filename, std::ifstream::in);
 
-    if (file.fail()) { return; }
+    if (file.fail()) { return false; }
 
     file.seekg(0, std::ios::end);
     int length = file.tellg();
@@ -204,6 +204,7 @@ void loadFromOBJFile(const char* filename, Model *m)
     SmoothImage(m->texture_map);
     SmoothImage(normals_texture);
 
+    // resolve the indices of (vertex, uv, normal) to form triangles
     m->triangles.init(faces.counter);
 
     for (int i = 0; i < m->triangles.size; i++)
@@ -242,14 +243,16 @@ void loadFromOBJFile(const char* filename, Model *m)
 
         normals_texture.release();
     }
+
+    return true;
 }
 
 
-int loadImageData(const char* filename, FrameBuffer &buffer)
+bool loadImageData(const char* filename, FrameBuffer &buffer)
 {
     int _w, _h;
     unsigned char* _data = stbi_load(filename, &_w, &_h, NULL, 3);
-    if (_data == NULL) return 0;
+    if (_data == NULL) return false;
 
     buffer.release();  // make sure it's empty
     buffer.init(_w, _h);
@@ -266,9 +269,9 @@ int loadImageData(const char* filename, FrameBuffer &buffer)
             buffer[_idx].b = _data[((_idx_flip) * 3) + 2];
         }
     }
-    delete _data;
+    delete[] _data;
 
-    return 1;
+    return true;
 }
 
 
@@ -291,7 +294,7 @@ int SaveImageData(const char* filename, FrameBuffer &buffer)
     }
     int _result = stbi_write_png(filename, buffer.width, buffer.height, 3, (void*)_data, buffer.width * 3);
 
-    delete _data;
+    delete[] _data;
 
     return _result;
 }

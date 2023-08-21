@@ -1,6 +1,8 @@
+
 #include "graphics.h"
 #include "common.h"
-
+#include <cstdlib>
+#include <utility>
 
 void Model::release()
 {
@@ -59,7 +61,7 @@ void SmoothImage(FrameBuffer &buffer)
         buffer[k] = _temp[k];
     }
 
-    delete _temp;
+    delete[] _temp;
 }
 
 

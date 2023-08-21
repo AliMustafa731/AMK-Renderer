@@ -2,6 +2,7 @@
 #define system_h
 
 #include <Windows.h>
+#include "graphics.h"
 
 // ID's for buttons and controls
 #define ID_TEXTURE_MAPPING 1
@@ -16,8 +17,6 @@
 #define ID_WIREFRAME_MODE 10
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
-struct Model;  // forward declaration
 
 void EnableButtonsOnModel(Model *m);
 

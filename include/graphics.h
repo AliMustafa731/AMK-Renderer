@@ -3,7 +3,6 @@
 
 #include "geometry.h"
 #include "array.h"
-#include <vector>
 
 
 struct Color

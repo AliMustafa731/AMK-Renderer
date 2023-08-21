@@ -5,6 +5,7 @@
 #include "rasterizator.h"
 #include "keycodes.h"
 #include <process.h>
+#include <string>
 
 // enable window visual theme style
 #pragma comment(linker,"\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -15,7 +16,9 @@ void onCommand(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void onKeyDown(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void onDraw(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-// main window callback
+//---------------------------------
+//   main window callback
+//---------------------------------
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)

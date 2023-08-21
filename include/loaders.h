@@ -3,9 +3,9 @@
 
 #include "graphics.h"
 
-void loadFromOBJFile(const char* filename, Model *m);
+bool loadFromOBJFile(const char* filename, Model *m);
 
-int loadImageData(const char* filename, FrameBuffer &buffer);
+bool loadImageData(const char* filename, FrameBuffer &buffer);
 
 int SaveImageData(const char* filename, FrameBuffer &buffer);
 
