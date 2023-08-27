@@ -2,7 +2,7 @@
 #define system_h
 
 #include <Windows.h>
-#include "graphics.h"
+#include "graphics/graphics.h"
 
 // ID's for buttons and controls
 #define ID_TEXTURE_MAPPING 1

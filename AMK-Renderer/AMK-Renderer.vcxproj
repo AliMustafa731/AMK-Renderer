@@ -18,6 +18,34 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\common.h" />
+    <ClInclude Include="..\src\data\array.h" />
+    <ClInclude Include="..\src\data\loaders.h" />
+    <ClInclude Include="..\src\extern\stb_image.h" />
+    <ClInclude Include="..\src\extern\stb_image_write.h" />
+    <ClInclude Include="..\src\geometry\geometry.h" />
+    <ClInclude Include="..\src\geometry\matrix.h" />
+    <ClInclude Include="..\src\geometry\vector.h" />
+    <ClInclude Include="..\src\graphics\graphics.h" />
+    <ClInclude Include="..\src\graphics\rasterizator.h" />
+    <ClInclude Include="..\src\keycodes.h" />
+    <ClInclude Include="..\src\program.h" />
+    <ClInclude Include="..\src\system.h" />
+    <ClInclude Include="..\src\timer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\data\loaders.cpp" />
+    <ClCompile Include="..\src\extern\stb_image.cpp" />
+    <ClCompile Include="..\src\extern\stb_image_write.cpp" />
+    <ClCompile Include="..\src\geometry\geometry.cpp" />
+    <ClCompile Include="..\src\geometry\matrix.cpp" />
+    <ClCompile Include="..\src\graphics\graphics.cpp" />
+    <ClCompile Include="..\src\graphics\rasterizator.cpp" />
+    <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\program.cpp" />
+    <ClCompile Include="..\src\system.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{A472D6AC-0C98-4358-BBA0-161851A77F30}</ProjectGuid>
@@ -70,16 +98,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)src;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -137,30 +165,6 @@
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="..\include\array.h" />
-    <ClInclude Include="..\include\common.h" />
-    <ClInclude Include="..\include\geometry.h" />
-    <ClInclude Include="..\include\graphics.h" />
-    <ClInclude Include="..\include\keycodes.h" />
-    <ClInclude Include="..\include\loaders.h" />
-    <ClInclude Include="..\include\program.h" />
-    <ClInclude Include="..\include\rasterizator.h" />
-    <ClInclude Include="..\include\stb_image.h" />
-    <ClInclude Include="..\include\stb_image_write.h" />
-    <ClInclude Include="..\include\system.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\src\geometry.cpp" />
-    <ClCompile Include="..\src\graphics.cpp" />
-    <ClCompile Include="..\src\loaders.cpp" />
-    <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="..\src\program.cpp" />
-    <ClCompile Include="..\src\rasterizator.cpp" />
-    <ClCompile Include="..\src\stb_image.cpp" />
-    <ClCompile Include="..\src\stb_image_write.cpp" />
-    <ClCompile Include="..\src\system.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

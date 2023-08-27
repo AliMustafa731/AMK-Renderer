@@ -1,9 +1,9 @@
 
 #include "program.h"
 #include "system.h"
-#include "loaders.h"
-#include "stb_image.h"
-#include "stb_image_write.h"
+#include "data/loaders.h"
+#include "extern/stb_image.h"
+#include "extern/stb_image_write.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>

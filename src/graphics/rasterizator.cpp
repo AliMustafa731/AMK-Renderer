@@ -1,10 +1,10 @@
-#include "rasterizator.h"
+
+#include "graphics/rasterizator.h"
 #include "program.h"
 #include "common.h"
 #include <cmath>
 
 
-Vector3 camera;
 Vector3 camera_offset;
 Matrix3 camera_matrix;
 Vector3 screen_offset;
@@ -33,25 +33,17 @@ Vector3 n;
 Vector2 uv;
 float _w[3];
 
-Color  white(255, 255, 255);
-Color  black(0, 0, 0);
-
+Color white(255, 255, 255);
 
 __forceinline Vector3 projection(Vector3 v)
 {
     Vector3 _v;
-
     float _w = 1.0;
 
-    if (focal_length != 0)
-    {
-        _w = 1.0 - (v.z / focal_length);
-    }
+    if (focal_length != 0) { _w = 1.0 - (v.z / focal_length); }
 
-    if (_w != 0.0)
-    {
-        _v = div(v, _w);
-    }
+    if (_w != 0.0) { _v = div(v, _w); }
+
     return _v;
 }
 
@@ -172,7 +164,7 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
         int _x = uv.x*(o.model->specular_map.width - 1);
         int _y = uv.y*(o.model->specular_map.height - 1);
 
-        spec_intensity = (float)o.model->specular_map(_x, _y).r / 127.0;
+        spec_intensity = (float)o.model->specular_map(_x, _y).r / 127.0f;
 
         spec = pow(_max(0, r.z), 10);
     }
@@ -199,17 +191,11 @@ void draw(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
     {
         tri = o.model->triangles[i];
 
-        if (VertexShader(o, buffer, z_buffer))
-        {
-            continue;  // ignore this triangle, (e.g. it's facing backward)
-        }
+        if (VertexShader(o, buffer, z_buffer)) { continue; } // ignore this triangle, (e.g. it's facing backward)
 
         fillTriangle(o, buffer, z_buffer);
 
-        if (e_wireframe)
-        {
-            drawTriangle(tri_screen, white, buffer, z_buffer);
-        }
+        if (e_wireframe) { drawTriangle(tri_screen, white, buffer, z_buffer); }
     }
 }
 
@@ -217,23 +203,23 @@ void draw(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
 void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
 {
     // calculating the rectangle to draw pixels within
-    Square rect(buffer.width - 1, buffer.height - 1, 0, 0);
+    int rect[4] = { buffer.width - 1, buffer.height - 1, 0, 0 };
 
     for (int k = 0; k < 3; k++)
     {
-        rect.x = _max(0, _min(rect.x, tri_screen[k].x));
-        rect.y = _max(0, _min(rect.y, tri_screen[k].y));
-        rect.w = _min(buffer.width - 1, _max(rect.w, tri_screen[k].x));
-        rect.h = _min(buffer.height - 1, _max(rect.h, tri_screen[k].y));
+        rect[0] = _max(0, _min(rect[0], tri_screen[k].x));
+        rect[1] = _max(0, _min(rect[1], tri_screen[k].y));
+        rect[2] = _min(buffer.width - 1, _max(rect[2], tri_screen[k].x));
+        rect[3] = _min(buffer.height - 1, _max(rect[3], tri_screen[k].y));
     }
 
     // filling the rectangle with pixels
     Vector3 bc_screen, bc_world;
     Vector2i p;
 
-    for (p.x = rect.x; p.x <= rect.w; p.x++)
+    for (p.x = rect[0]; p.x <= rect[2]; p.x++)
     {
-        for (p.y = rect.y; p.y <= rect.h; p.y++)
+        for (p.y = rect[1]; p.y <= rect[3]; p.y++)
         {
             bc_screen = barycentric(tri_screen, p);
 
@@ -251,9 +237,7 @@ void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
             if (_z > z_buffer[idx])
             {
                 z_buffer[idx] = _z;
-
                 Color c = FragmentShader(o, bc_world);
-
                 buffer(p.x, p.y) = c;  // draw the pixel finally
             }
         }

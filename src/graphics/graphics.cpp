@@ -1,5 +1,5 @@
 
-#include "graphics.h"
+#include "graphics/graphics.h"
 #include "common.h"
 #include <cstdlib>
 #include <utility>
@@ -108,7 +108,7 @@ void drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& 
 
         if (steep) std::swap(x, y);
 
-        if (z >= zbuffer(x, y) - 0.1f)
+        if (z >= zbuffer(x, y) - 0.2f)
         {
             zbuffer(x, y) = z;
             buffer(x, y) = _c;

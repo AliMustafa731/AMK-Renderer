@@ -1,10 +1,14 @@
+
 #include "program.h"
 #include "system.h"
-#include "geometry.h"
-#include "rasterizator.h"
+#include "geometry/geometry.h"
+#include "graphics/rasterizator.h"
+#include "data/loaders.h"
+
 #include "keycodes.h"
 #include "common.h"
-#include "loaders.h"
+#include "timer.h"
+
 #include <cmath>
 #include <string>
 
@@ -33,7 +37,11 @@ void Program::init(const char* name, int _w, int _h)
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClass(&wc);
 
-    win_handle = CreateWindowEx(0, "AMKRenderer", name, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, CW_USEDEFAULT, CW_USEDEFAULT, _w, _h, NULL, NULL, GetModuleHandle(NULL), NULL);
+    win_handle = CreateWindowEx
+    (
+        0, "AMKRenderer", name, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+        CW_USEDEFAULT, CW_USEDEFAULT, _w, _h, NULL, NULL, GetModuleHandle(NULL), NULL
+    );
 
     if(win_handle == NULL)
     {
@@ -59,13 +67,12 @@ void Program::init(const char* name, int _w, int _h)
     bitmap_info.bmiHeader.biBitCount = 32;
     bitmap_info.bmiHeader.biCompression = BI_RGB;
 
+    timer_init();
+
     // setting up the background
     for(int i = 0 ; i < screen.size ; i++)
     {
-        int y = i / width;
-        float t = (float)y / height;
-        unsigned char x = (unsigned char)(40.f + 160.0f * t);
-        Color c(x, x, x);
+        Color c(160, 160, 160);
         background[i] = c;
         screen[i] = c;
         zbuffer[i] = -FLT_MAX;  // set to a small value
@@ -79,8 +86,6 @@ void Program::init(const char* name, int _w, int _h)
     loadFromOBJFile("brick.obj", &main_model);
     EnableButtonsOnModel(&main_model);
 }
-
-void frameRateLimit(); // forward declaration
 
 void Program::update()
 {
@@ -162,26 +167,4 @@ void Program::clearScreen()
         zbuffer[i] = -FLT_MAX;  // set to a small value
     }
 }
-
-int first_time = 0, last_time = 0, ms = 0, ms_avg = 0;
-std::string txt;
-
-void frameRateLimit() // limiting the framerate to ~ 60 fps (58 actually)
-{
-    last_time = GetTickCount64();
-    ms = last_time - first_time;
-    int result = 17 - ms;
-
-    if(result > 0)
-    {
-        Sleep(result);
-    }
-
-    txt = program_title + std::to_string((ms + ms_avg)/2) + " ms";
-    ms_avg = ms;
-    SetWindowText(main_program->win_handle, txt.c_str());
-
-    first_time = GetTickCount64();
-}
-
 

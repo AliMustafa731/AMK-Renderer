@@ -2,7 +2,7 @@
 #define program_h
 
 #include <Windows.h>
-#include "graphics.h"
+#include "graphics/graphics.h"
 
 
 struct Program

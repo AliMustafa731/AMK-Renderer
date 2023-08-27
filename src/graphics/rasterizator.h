@@ -1,8 +1,8 @@
 #ifndef rasterizator_h
 #define rasterizator_h
 
-#include "graphics.h"
-#include "geometry.h"
+#include "graphics/graphics.h"
+#include "geometry/geometry.h"
 
 
 extern Vector3 camera_offset;

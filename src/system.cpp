@@ -1,8 +1,8 @@
 #include "system.h"
 #include "program.h"
-#include "graphics.h"
-#include "loaders.h"
-#include "rasterizator.h"
+#include "graphics/graphics.h"
+#include "graphics/rasterizator.h"
+#include "data/loaders.h"
 #include "keycodes.h"
 #include <process.h>
 #include <string>

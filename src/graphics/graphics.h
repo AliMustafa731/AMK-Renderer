@@ -1,8 +1,8 @@
 #ifndef graphics_h
 #define graphics_h
 
-#include "geometry.h"
-#include "array.h"
+#include "geometry/geometry.h"
+#include "data/array.h"
 
 
 struct Color

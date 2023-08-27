@@ -1,7 +1,7 @@
 #ifndef loaders_h
 #define loaders_h
 
-#include "graphics.h"
+#include "graphics/graphics.h"
 
 bool loadFromOBJFile(const char* filename, Model *m);
 
