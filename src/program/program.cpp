@@ -70,7 +70,7 @@ void Program::init(const char* name, int _w, int _h)
     timer_init();
 
     // setting up the background
-    for(int i = 0 ; i < screen.size ; i++)
+    for(int i = 0 ; i < screen.size() ; i++)
     {
         Color c(160, 160, 160);
         background[i] = c;
@@ -161,7 +161,7 @@ void Program::update()
 
 void Program::clearScreen()
 {
-    for(int i = 0 ; i < screen.size ; i++)
+    for(int i = 0 ; i < screen.size() ; i++)
     {
         screen[i] = background[i];
         zbuffer[i] = -FLT_MAX;  // set to a small value

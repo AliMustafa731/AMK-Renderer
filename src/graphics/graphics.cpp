@@ -18,11 +18,11 @@ void normalize(Array<Vector3> &mesh)
 
     float max_length = 0;
 
-    for (int i = 0; i < mesh.size; i++)
+    for (int i = 0; i < mesh.size(); i++)
     {
         max_length = _max(max_length, length(mesh[i]));
     }
-    for (int j = 0; j < mesh.size; j++)
+    for (int j = 0; j < mesh.size(); j++)
     {
         mesh[j].x = mesh[j].x / max_length;
         mesh[j].y = mesh[j].y / max_length;
@@ -34,7 +34,7 @@ void SmoothImage(FrameBuffer &buffer)
 {
     if(buffer.data == NULL) return;
 
-    Color* _temp = new Color[buffer.size];
+    Color* _temp = new Color[buffer.size()];
 
     for(int i = 1 ; i < buffer.width - 1 ; i++) // calculating average colors for smoothing
     {
@@ -56,7 +56,7 @@ void SmoothImage(FrameBuffer &buffer)
             _temp[_idx].b = center.b/2 + (up.b+down.b+right.b+left.b + up_left.b+up_right.b+down_left.b+down_right.b)/16;
         }
     }
-    for(int k = 0 ; k < buffer.size ; k++) // copy the final pixels
+    for(int k = 0 ; k < buffer.size() ; k++) // copy the final pixels
     {
         buffer[k] = _temp[k];
     }

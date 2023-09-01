@@ -187,7 +187,7 @@ void draw(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
     _specular_mapping = (e_specular && o.model->specular_map.data != NULL);
     _flat_shading = (e_flat_shading || o.model->flat_shading);
 
-    for (int i = 0; i < o.model->triangles.size; i++)
+    for (int i = 0; i < o.model->triangles.size(); i++)
     {
         tri = o.model->triangles[i];
 

@@ -104,10 +104,10 @@ bool loadFromOBJFile(const char* filename, Model *m)
     }
 
     // reserve memory
-    Array<Vector3> vertices(numVertices);
-    Array<Vector3> normals(numNorms);
-    Array<Vector2> uvs(numUV);
-    Array<Face> faces(numFaces);
+    Array<Vector3> vertices;  vertices.reserve(numVertices);
+    Array<Vector3> normals;   normals.reserve(numNorms);
+    Array<Vector2> uvs;       uvs.reserve(numUV);
+    Array<Face>    faces;     faces.reserve(numFaces);
 
     m->nm_tangent = false;
     m->flat_shading = false;
@@ -205,9 +205,9 @@ bool loadFromOBJFile(const char* filename, Model *m)
     SmoothImage(normals_texture);
 
     // resolve the indices of (vertex, uv, normal) to form triangles
-    m->triangles.init(faces.counter);
+    m->triangles.init(faces.size());
 
-    for (int i = 0; i < m->triangles.size; i++)
+    for (int i = 0; i < m->triangles.size(); i++)
     {
         for (int j = 0; j < 3; j++)
         {
@@ -228,7 +228,7 @@ bool loadFromOBJFile(const char* filename, Model *m)
     {
         m->normals_map.init(normals_texture.width, normals_texture.height);
 
-        for (int i = 0; i < normals_texture.size; i++)
+        for (int i = 0; i < normals_texture.size() ; i++)
         {
             Vector3 _n;
             _n = Vector3
@@ -278,7 +278,7 @@ bool loadImageData(const char* filename, FrameBuffer &buffer)
 int SaveImageData(const char* filename, FrameBuffer &buffer)
 {
     if (buffer.data == NULL) return 0;
-    unsigned char* _data = new unsigned char[buffer.size * 3];
+    unsigned char* _data = new unsigned char[buffer.size() * 3];
 
     // copy and flip vertically
     for (int x = 0; x < buffer.width; x++)
