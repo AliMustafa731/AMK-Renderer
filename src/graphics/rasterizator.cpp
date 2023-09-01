@@ -1,6 +1,6 @@
 
 #include "graphics/rasterizator.h"
-#include "program.h"
+#include "program/program.h"
 #include "common.h"
 #include <cmath>
 

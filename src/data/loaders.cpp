@@ -1,6 +1,6 @@
 
-#include "program.h"
-#include "system.h"
+#include "program/program.h"
+#include "program/system.h"
 #include "data/loaders.h"
 #include "extern/stb_image.h"
 #include "extern/stb_image_write.h"

@@ -1,13 +1,13 @@
 
-#include "program.h"
-#include "system.h"
+#include "program/program.h"
+#include "program/system.h"
 #include "geometry/geometry.h"
 #include "graphics/rasterizator.h"
 #include "data/loaders.h"
 
 #include "keycodes.h"
 #include "common.h"
-#include "timer.h"
+#include "program/timer.h"
 
 #include <cmath>
 #include <string>

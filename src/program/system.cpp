@@ -1,5 +1,5 @@
-#include "system.h"
-#include "program.h"
+#include "program/system.h"
+#include "program/program.h"
 #include "graphics/graphics.h"
 #include "graphics/rasterizator.h"
 #include "data/loaders.h"

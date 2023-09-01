@@ -30,9 +30,9 @@
     <ClInclude Include="..\src\graphics\graphics.h" />
     <ClInclude Include="..\src\graphics\rasterizator.h" />
     <ClInclude Include="..\src\keycodes.h" />
-    <ClInclude Include="..\src\program.h" />
-    <ClInclude Include="..\src\system.h" />
-    <ClInclude Include="..\src\timer.h" />
+    <ClInclude Include="..\src\program\program.h" />
+    <ClInclude Include="..\src\program\system.h" />
+    <ClInclude Include="..\src\program\timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\data\loaders.cpp" />
@@ -43,8 +43,8 @@
     <ClCompile Include="..\src\graphics\graphics.cpp" />
     <ClCompile Include="..\src\graphics\rasterizator.cpp" />
     <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="..\src\program.cpp" />
-    <ClCompile Include="..\src\system.cpp" />
+    <ClCompile Include="..\src\program\program.cpp" />
+    <ClCompile Include="..\src\program\system.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

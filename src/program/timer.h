@@ -2,7 +2,7 @@
 #define timer_included
 
 #include <string>
-#include "program.h"
+#include "program/program.h"
 
 
 int Target_FPS = (1.0f / 60.0f) * 1000.0f; // time needed for one frame (in milliseconds)
