@@ -29,9 +29,7 @@
     <ClInclude Include="..\src\geometry\vector.h" />
     <ClInclude Include="..\src\graphics\graphics.h" />
     <ClInclude Include="..\src\graphics\rasterizator.h" />
-    <ClInclude Include="..\src\keycodes.h" />
     <ClInclude Include="..\src\program\program.h" />
-    <ClInclude Include="..\src\program\system.h" />
     <ClInclude Include="..\src\program\timer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -44,7 +42,6 @@
     <ClCompile Include="..\src\graphics\rasterizator.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\program\program.cpp" />
-    <ClCompile Include="..\src\program\system.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

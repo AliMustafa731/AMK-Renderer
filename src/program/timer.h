@@ -25,7 +25,7 @@ void frameRateLimit() // limiting the framerate to ~ 60 fps
     float result = Target_FPS - delta;
 
     std::string txt = "AMK Renderer " + std::to_string((int)delta) + " ms";
-    SetWindowText(main_program->win_handle, txt.c_str());
+    SetWindowText(Program::main_program->win_handle, txt.c_str());
 
     if (result > 0)
     {

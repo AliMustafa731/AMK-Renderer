@@ -1,6 +1,5 @@
 
 #include "program/program.h"
-#include "program/system.h"
 #include "data/loaders.h"
 #include "extern/stb_image.h"
 #include "extern/stb_image_write.h"
@@ -167,7 +166,7 @@ bool loadFromOBJFile(const char* filename, Model *m)
             if (!loadImageData(a.c_str(), m->texture_map))
             {
                 std::string msg = "can't load texture map \"" + a + "\"";
-                MessageBox(main_program->win_handle, msg.c_str(), "Error", MB_OK);
+                MessageBox(Program::main_program->win_handle, msg.c_str(), "Error", MB_OK);
             }
         }
         else if (!line.compare(0, 7, "normal ")) // path to normal texture file
@@ -177,7 +176,7 @@ bool loadFromOBJFile(const char* filename, Model *m)
             if (!loadImageData(a.c_str(), normals_texture))
             {
                 std::string msg = "can't load normal map \"" + a + "\"";
-                MessageBox(main_program->win_handle, msg.c_str(), "Error", MB_OK);
+                MessageBox(Program::main_program->win_handle, msg.c_str(), "Error", MB_OK);
             }
         }
         else if (!line.compare(0, 9, "specular "))// path to specular texture file
@@ -187,7 +186,7 @@ bool loadFromOBJFile(const char* filename, Model *m)
             if (!loadImageData(a.c_str(), m->specular_map))
             {
                 std::string msg = "can't load specular map \"" + a + "\"";
-                MessageBox(main_program->win_handle, msg.c_str(), "Error", MB_OK);
+                MessageBox(Program::main_program->win_handle, msg.c_str(), "Error", MB_OK);
             }
         }
         else if (!line.compare(0, 16, "nm_tangent_space")) // set a flag
