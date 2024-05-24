@@ -25,29 +25,22 @@ void load_model_thread(void *args);
 //---------------------------------
 
 Program* Program::main_program;
-Model* Program::main_model;
 
 Object object;
 float angle_y = 0.0f; // angle around Y-axis
 float angle_x = 0.4f; // angle around X-axis
 const char* program_title;
 
-HWND buttons[16];
-OPENFILENAME open_file = { 0 };
-OPENFILENAME save_file = { 0 };
-char file_name[512];
-
 const char* header_txt = "\nBy : Ali Mustafa Kamel\n2022-2023\n\nUse Arrow keys for rotating\nUse W and S for zooming";
-const char* info_txt =
-"This program was made with the goal of not using any 3rd-party graphics libraries. \
-The goal was to learn how 3D graphics works at the most \"low-level\", which is drawing a single pixel to the screen.\n\n\
-Note : win32 API was used here only to manage the window and it's controls\n\nSee \"README.txt\" for more information";
 
 //---------------------------------
 //   Constructors
 //---------------------------------
 
-Program::Program(){}
+Program::Program()
+{
+
+}
 
 Program::Program(const char* name, int _w, int _h)
 {
@@ -96,7 +89,7 @@ void Program::init(const char* name, int _w, int _h)
 
     width = rect.right - 200;
     height = rect.bottom;
-    screen.init(width, height);
+    frameBuffer.init(width, height);
     background.init(width, height);
     zbuffer.init(width, height);
 
@@ -111,23 +104,21 @@ void Program::init(const char* name, int _w, int _h)
 
     // setting up the background
 
-    for(int i = 0 ; i < screen.size() ; i++)
+    for(int i = 0 ; i < frameBuffer.size() ; i++)
     {
-        Color c(160, 160, 160);
+        Color c = Color(160, 160, 160);
         background[i] = c;
-        screen[i] = c;
+        frameBuffer[i] = c;
         zbuffer[i] = -FLT_MAX;  // set to a small value
     }
 
     // load a test 3D model
 
     lookAt(Vector3(0, 0, 5), Vector3(0, 0, 0), Vector3(0, 1, 0));
-    main_model = new Model();
     object.position = Vector3(0.0, 0.0, 0.0);
-    object.model = main_model;
+    object.model = &main_model;
 
-    loadFromOBJFile("brick.obj", main_model);
-    EnableButtonsOnModel(main_model);
+    this->loadMainModel("brick.obj");
 }
 
 //---------------------------------
@@ -192,13 +183,13 @@ void Program::update()
         if (angle_x > 6.283) angle_x = 0;
 
         camera_matrix = mul_matrix(rotation_y(angle_y), rotation_x(angle_x));
-        clearScreen();
+        clearFrameBuffer();
 
-        draw(object, screen, zbuffer);
+        draw(object, frameBuffer, zbuffer);
         StretchDIBits
         (
-            win_hdc, 0, 0, screen.width(), screen.height(), 0, 0, screen.width(), screen.height(),
-            (void*)screen.data(), &bitmap_info, DIB_RGB_COLORS, SRCCOPY
+            win_hdc, 0, 0, frameBuffer.width(), frameBuffer.height(), 0, 0, frameBuffer.width(), frameBuffer.height(),
+            (void*)frameBuffer.data(), &bitmap_info, DIB_RGB_COLORS, SRCCOPY
         );
     }
 
@@ -206,11 +197,11 @@ void Program::update()
     frameRateLimit();
 }
 
-void Program::clearScreen()
+void Program::clearFrameBuffer()
 {
-    for (int i = 0; i < screen.size(); i++)
+    for (int i = 0; i < frameBuffer.size(); i++)
     {
-        screen[i] = background[i];
+        frameBuffer[i] = background[i];
         zbuffer[i] = -FLT_MAX;  // set to a small value
     }
 }
@@ -284,11 +275,6 @@ void Program::onCreate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         "BUTTON", "Save as image", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
         830, 380, 120, 30, hwnd, (HMENU)ID_SAVE_IMAGE, GetModuleHandle(NULL), NULL
     );
-    buttons[2] = CreateWindow
-    (
-        "BUTTON", "More info", WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-        830, 530, 120, 30, hwnd, (HMENU)ID_INFO, GetModuleHandle(NULL), NULL
-    );
     buttons[3] = CreateWindow
     (
         "BUTTON", "Texture mapping   \'T\'", WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,
@@ -331,35 +317,6 @@ void Program::onCreate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         880, 120, 100, 30, hwnd, (HMENU)ID_WIREFRAME_MODE, GetModuleHandle(NULL), NULL
     );
     CheckRadioButton(hwnd, ID_RENDER_MODE, ID_WIREFRAME_MODE, ID_RENDER_MODE);
-
-    // Initialize OPENFILENAME for loading and saving
-    ZeroMemory(&open_file, sizeof(OPENFILENAME));
-    ZeroMemory(&save_file, sizeof(OPENFILENAME));
-
-    open_file.lStructSize = sizeof(open_file);
-    open_file.hwndOwner = hwnd;
-    open_file.lpstrFile = file_name;
-    open_file.lpstrFile[0] = '\0';
-    open_file.nMaxFile = sizeof(file_name);
-    open_file.lpstrFilter = ".obj 3D format\0*.obj\0\0";
-    open_file.nFilterIndex = 1;
-    open_file.lpstrFileTitle = NULL;
-    open_file.nMaxFileTitle = 0;
-    open_file.lpstrInitialDir = NULL;
-    open_file.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
-
-    save_file.lStructSize = sizeof(open_file);
-    save_file.hwndOwner = hwnd;
-    save_file.lpstrFile = file_name;
-    save_file.lpstrFile[0] = '\0';
-    save_file.nMaxFile = sizeof(file_name);
-    save_file.lpstrFilter = ".png format\0*.png\0\0";
-    save_file.nFilterIndex = 1;
-    open_file.lpstrFileTitle = NULL;
-    save_file.nMaxFileTitle = 0;
-    save_file.lpstrInitialDir = NULL;
-    save_file.lpstrDefExt = "png";
-    save_file.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 }
 
 void Program::onCommand(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -371,7 +328,6 @@ void Program::onCommand(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     if (wmId == ID_SPECULAR_MAPPING) e_specular = IsDlgButtonChecked(hwnd, wmId);
     if (wmId == ID_WIREFRAME) e_wireframe = IsDlgButtonChecked(hwnd, wmId);
     if (wmId == ID_FLAT_SHADING) e_flat_shading = IsDlgButtonChecked(hwnd, wmId);
-    if (wmId == ID_INFO) MessageBox(hwnd, info_txt, "More info", MB_OK);
 
     e_render_mode = IsDlgButtonChecked(hwnd, ID_RENDER_MODE);
 
@@ -379,12 +335,12 @@ void Program::onCommand(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (IsWindowEnabled(GetDlgItem(hwnd, wmId)))
         {
-            if (GetOpenFileName(&open_file))
+            if (OpenFileDialog(".obj 3D format\0 * .obj\0\0"))
             {
-                Program::main_program->is_loading = true;
+                this->is_loading = true;
                 EnableAllButtons(false);
 
-                _beginthread(load_model_thread, 0, NULL);
+                _beginthread(load_model_thread, 0, (void*)explorer_file_path);
             }
         }
     }
@@ -392,13 +348,12 @@ void Program::onCommand(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     {
         if (IsWindowEnabled(GetDlgItem(hwnd, wmId)))
         {
-            if (GetSaveFileName(&save_file))
+            if (SaveFileDialog(".png format\0*.png\0\0", "png"))
             {
-                if (SaveImageData(file_name, Program::main_program->screen))
+                if (SaveImageData(explorer_file_path, this->frameBuffer))
                 {
-                    std::string _str_ = "Successfully saved image to :\n";
-                    _str_ += file_name;
-                    MessageBox(hwnd, _str_.c_str(), "Done", MB_OK);
+                    std::string str = "Successfully saved image to :\n" + std::string(explorer_file_path);
+                    MessageBox(hwnd, str.c_str(), "Done", MB_OK);
                 }
             }
         }
@@ -452,7 +407,7 @@ void Program::onDraw(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     (
         hdc, 0, 0, Program::main_program->width, Program::main_program->height,
         0, 0, Program::main_program->width, Program::main_program->height,
-        (void*)Program::main_program->screen.data(), &Program::main_program->bitmap_info, DIB_RGB_COLORS, SRCCOPY
+        (void*)Program::main_program->frameBuffer.data(), &Program::main_program->bitmap_info, DIB_RGB_COLORS, SRCCOPY
     );
 
     EndPaint(hwnd, &ps);
@@ -471,23 +426,23 @@ void Program::onDestroy(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void load_model_thread(void *args)
 {
-    Program::main_model->release();
-
-    loadFromOBJFile(file_name, Program::main_model);
-
-    Program::main_program->EnableAllButtons(true);
-    Program::main_program->EnableButtonsOnModel(Program::main_model);
-
-    Program::main_program->is_loading = false;
+    Program::main_program->loadMainModel((const char*)args);
 }
 
-void Program::EnableButtonsOnModel(Model *m)
+void Program::loadMainModel(const char* filename)
 {
+    this->main_model.release();
+
+    loadFromOBJFile(filename, &this->main_model);
+
     // Enabling & Disabling controls depending on which textures the model has
-    EnableWindow(GetDlgItem(win_handle, ID_TEXTURE_MAPPING), (m->texture_map.data() != NULL));
-    EnableWindow(GetDlgItem(win_handle, ID_NORMAL_MAPPING), (m->normals_map.data() != NULL));
-    EnableWindow(GetDlgItem(win_handle, ID_SPECULAR_MAPPING), (m->specular_map.data() != NULL));
-    EnableWindow(GetDlgItem(win_handle, ID_FLAT_SHADING), (!m->flat_shading));
+    EnableWindow(GetDlgItem(win_handle, ID_TEXTURE_MAPPING), (main_model.texture_map.data() != NULL));
+    EnableWindow(GetDlgItem(win_handle, ID_NORMAL_MAPPING), (main_model.normals_map.data() != NULL));
+    EnableWindow(GetDlgItem(win_handle, ID_SPECULAR_MAPPING), (main_model.specular_map.data() != NULL));
+    EnableWindow(GetDlgItem(win_handle, ID_FLAT_SHADING), (!main_model.flat_shading));
+
+    this->EnableAllButtons(true);
+    this->is_loading = false;
 }
 
 void Program::EnableAllButtons(bool state)
@@ -499,4 +454,47 @@ void Program::EnableAllButtons(bool state)
             EnableWindow(buttons[i], state);
         }
     }
+}
+
+int Program::OpenFileDialog(const char* filter, const char* title)
+{
+    OPENFILENAME ofn;
+    ZeroMemory(&ofn, sizeof(OPENFILENAME));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = this->win_handle;
+    ofn.lpstrFile = (LPSTR)explorer_file_path;
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = filter;
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.lpstrTitle = title;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+    return GetOpenFileName(&ofn);
+}
+
+int Program::SaveFileDialog(const char* filter, const char* default_ext, const char* title)
+{
+    OPENFILENAME ofn;
+    ZeroMemory(&ofn, sizeof(OPENFILENAME));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = this->win_handle;
+    ofn.lpstrFile = (LPSTR)explorer_file_path;
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrFilter = filter;
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = NULL;
+    ofn.lpstrDefExt = default_ext;
+    ofn.lpstrTitle = title;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
+
+    return GetSaveFileName(&ofn);
 }

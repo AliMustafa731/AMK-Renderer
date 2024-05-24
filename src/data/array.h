@@ -9,7 +9,7 @@
 //---------------------------------
 //   Dynamic Array Structure
 //---------------------------------
-template<typename T> struct Array
+template<typename T> class Array
 {
 public:
 
@@ -97,7 +97,7 @@ protected:
 //----------------------------------------------
 //   2-Dimensional Dynamic Array Structure
 //----------------------------------------------
-template<typename T> struct Buffer : Array<T>
+template<typename T> class Buffer : public Array<T>
 {
 public:
 

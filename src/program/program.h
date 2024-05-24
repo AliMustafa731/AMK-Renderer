@@ -15,7 +15,6 @@ enum ControlID
     ID_SPECULAR_MAPPING,
     ID_LOAD_FILE,
     ID_SAVE_IMAGE,
-    ID_INFO,
     ID_RENDER_MODE,
     ID_WIREFRAME_MODE
 };
@@ -32,7 +31,7 @@ public:
     //---------------------------------
     void init(const char* name, int _w, int _h);
     void update();
-    void clearScreen();
+    void clearFrameBuffer();
 
     //---------------------------------
     //   Callbacks
@@ -43,16 +42,25 @@ public:
     void onDraw(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     void onDestroy(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    void EnableButtonsOnModel(Model *m);
+    void loadMainModel(const char* filename);  // called by an external thread
+
+    //---------------------------------
+    //   Utilities
+    //---------------------------------
+    int OpenFileDialog(const char* filter, const char* title = "Open File");
+    int SaveFileDialog(const char* filter, const char* default_ext, const char* title = "Open File");
     void EnableAllButtons(bool state);
 
     //---------------------------------
-    //   Variables
+    //   Accessors
     //---------------------------------
+    HWND WindowHandle() const { return win_handle; }
+    bool isRunning() const { return is_running; }
 
-    // global pointers
+    // global pointer
     static Program* main_program;
-    static Model* main_model;
+
+private:
 
     // control flags
     bool is_running, is_loading, need_update;
@@ -60,11 +68,18 @@ public:
     // graphics
     int width, height;
     ZBuffer zbuffer;
-    FrameBuffer screen, background;
+    FrameBuffer frameBuffer, background;
+    Model main_model;
+
     // windows specific handles
     HDC win_hdc;
     HWND win_handle;
     BITMAPINFO bitmap_info;
+
+    HWND buttons[16];
+
+    // used to hold the path returned from OpenFileDialog & SaveFileDialog
+    char explorer_file_path[MAX_PATH];
 };
 
 #endif // program_h

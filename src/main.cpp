@@ -5,7 +5,7 @@ int main()
 {
     Program program("AMK Renderer ", 1000, 640);
 
-    while(program.is_running)
+    while(program.isRunning())
     {
         program.update();
     }
