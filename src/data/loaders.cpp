@@ -223,9 +223,9 @@ bool loadFromOBJFile(const char* filename, Model *m)
 
     // convert texture pixels to Vector3 array
     // change the range from [0, 255] into [-1, 1]
-    if (normals_texture.data != NULL)
+    if (normals_texture.data() != NULL)
     {
-        m->normals_map.init(normals_texture.width, normals_texture.height);
+        m->normals_map.init(normals_texture.width(), normals_texture.height());
 
         for (int i = 0; i < normals_texture.size() ; i++)
         {
@@ -257,12 +257,12 @@ bool loadImageData(const char* filename, FrameBuffer &buffer)
     buffer.init(_w, _h);
 
     // copy and flip vertically
-    for (int x = 0; x < buffer.width; x++)
+    for (int x = 0; x < buffer.width(); x++)
     {
-        for (int y = 0; y < buffer.height; y++)
+        for (int y = 0; y < buffer.height(); y++)
         {
-            int _idx = x + y * buffer.width;
-            int _idx_flip = x + ((buffer.height - 1) - y)*buffer.width;
+            int _idx = x + y * buffer.width();
+            int _idx_flip = x + ((buffer.height() - 1) - y)*buffer.width();
             buffer[_idx].r = _data[((_idx_flip) * 3)];
             buffer[_idx].g = _data[((_idx_flip) * 3) + 1];
             buffer[_idx].b = _data[((_idx_flip) * 3) + 2];
@@ -276,22 +276,22 @@ bool loadImageData(const char* filename, FrameBuffer &buffer)
 
 int SaveImageData(const char* filename, FrameBuffer &buffer)
 {
-    if (buffer.data == NULL) return 0;
+    if (buffer.data() == NULL) return 0;
     unsigned char* _data = new unsigned char[buffer.size() * 3];
 
     // copy and flip vertically
-    for (int x = 0; x < buffer.width; x++)
+    for (int x = 0; x < buffer.width(); x++)
     {
-        for (int y = 0; y < buffer.height; y++)
+        for (int y = 0; y < buffer.height(); y++)
         {
-            int _idx = x + y * buffer.width;
-            int _idx_flip = x + ((buffer.height - 1) - y)*buffer.width;
+            int _idx = x + y * buffer.width();
+            int _idx_flip = x + ((buffer.height() - 1) - y)*buffer.width();
             _data[((_idx_flip) * 3)] = buffer[_idx].r;
             _data[((_idx_flip) * 3) + 1] = buffer[_idx].g;
             _data[((_idx_flip) * 3) + 2] = buffer[_idx].b;
         }
     }
-    int _result = stbi_write_png(filename, buffer.width, buffer.height, 3, (void*)_data, buffer.width * 3);
+    int _result = stbi_write_png(filename, buffer.width(), buffer.height(), 3, (void*)_data, buffer.width() * 3);
 
     delete[] _data;
 

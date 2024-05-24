@@ -14,7 +14,7 @@ void Model::release()
 
 void normalize(Array<Vector3> &mesh)
 {
-    if (mesh.data == NULL) return;
+    if (mesh.size() == 0) return;
 
     float max_length = 0;
 
@@ -32,13 +32,13 @@ void normalize(Array<Vector3> &mesh)
 
 void SmoothImage(FrameBuffer &buffer)
 {
-    if(buffer.data == NULL) return;
+    if(buffer.data() == NULL) return;
 
     Color* _temp = new Color[buffer.size()];
 
-    for(int i = 1 ; i < buffer.width - 1 ; i++) // calculating average colors for smoothing
+    for(int i = 1 ; i < buffer.width() - 1 ; i++) // calculating average colors for smoothing
     {
-        for(int j = 1 ; j < buffer.height - 1 ; j++)
+        for(int j = 1 ; j < buffer.height() - 1 ; j++)
         {
             Color center      = buffer(i, j);
             Color up          = buffer(i, j + 1);
@@ -50,7 +50,7 @@ void SmoothImage(FrameBuffer &buffer)
             Color down_left   = buffer(i - 1, j - 1);
             Color down_right  = buffer(i + 1, j - 1);
 
-            int _idx = i + j*buffer.width;
+            int _idx = i + j*buffer.width();
             _temp[_idx].r = center.r/2 + (up.r+down.r+right.r+left.r + up_left.r+up_right.r+down_left.r+down_right.r)/16;
             _temp[_idx].g = center.g/2 + (up.g+down.g+right.g+left.g + up_left.g+up_right.g+down_left.g+down_right.g)/16;
             _temp[_idx].b = center.b/2 + (up.b+down.b+right.b+left.b + up_left.b+up_right.b+down_left.b+down_right.b)/16;
@@ -76,11 +76,11 @@ void drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& 
 {
     bool steep = false;
 
-    int x1 = _max(0, _min(v1.x, buffer.width-1));
-    int y1 = _max(0, _min(v1.y, buffer.height-1));;
+    int x1 = _max(0, _min(v1.x, buffer.width()-1));
+    int y1 = _max(0, _min(v1.y, buffer.height()-1));;
     float z1 = v1.z;
-    int x2 = _max(0, _min(v2.x, buffer.width-1));
-    int y2 = _max(0, _min(v2.y, buffer.height-1));;
+    int x2 = _max(0, _min(v2.x, buffer.width()-1));
+    int y2 = _max(0, _min(v2.y, buffer.height()-1));;
     float z2 = v2.z;
 
     int dx = std::abs(x1 - x2);

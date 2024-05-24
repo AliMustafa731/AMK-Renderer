@@ -197,8 +197,8 @@ void Program::update()
         draw(object, screen, zbuffer);
         StretchDIBits
         (
-            win_hdc, 0, 0, screen.width, screen.height, 0, 0, screen.width, screen.height,
-            (void*)screen.data, &bitmap_info, DIB_RGB_COLORS, SRCCOPY
+            win_hdc, 0, 0, screen.width(), screen.height(), 0, 0, screen.width(), screen.height(),
+            (void*)screen.data(), &bitmap_info, DIB_RGB_COLORS, SRCCOPY
         );
     }
 
@@ -452,7 +452,7 @@ void Program::onDraw(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     (
         hdc, 0, 0, Program::main_program->width, Program::main_program->height,
         0, 0, Program::main_program->width, Program::main_program->height,
-        (void*)Program::main_program->screen.data, &Program::main_program->bitmap_info, DIB_RGB_COLORS, SRCCOPY
+        (void*)Program::main_program->screen.data(), &Program::main_program->bitmap_info, DIB_RGB_COLORS, SRCCOPY
     );
 
     EndPaint(hwnd, &ps);
@@ -484,9 +484,9 @@ void load_model_thread(void *args)
 void Program::EnableButtonsOnModel(Model *m)
 {
     // Enabling & Disabling controls depending on which textures the model has
-    EnableWindow(GetDlgItem(win_handle, ID_TEXTURE_MAPPING), (m->texture_map.data != NULL));
-    EnableWindow(GetDlgItem(win_handle, ID_NORMAL_MAPPING), (m->normals_map.data != NULL));
-    EnableWindow(GetDlgItem(win_handle, ID_SPECULAR_MAPPING), (m->specular_map.data != NULL));
+    EnableWindow(GetDlgItem(win_handle, ID_TEXTURE_MAPPING), (m->texture_map.data() != NULL));
+    EnableWindow(GetDlgItem(win_handle, ID_NORMAL_MAPPING), (m->normals_map.data() != NULL));
+    EnableWindow(GetDlgItem(win_handle, ID_SPECULAR_MAPPING), (m->specular_map.data() != NULL));
     EnableWindow(GetDlgItem(win_handle, ID_FLAT_SHADING), (!m->flat_shading));
 }
 

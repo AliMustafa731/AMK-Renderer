@@ -124,16 +124,16 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
 
     if (_texture_mapping) // texture mapping
     {
-        int _x = uv.x*(o.model->texture_map.width - 1);
-        int _y = uv.y*(o.model->texture_map.height - 1);
+        int _x = uv.x*(o.model->texture_map.width() - 1);
+        int _y = uv.y*(o.model->texture_map.height() - 1);
 
         c = o.model->texture_map(_x, _y);
     }
 
     if (_normal_mapping) // normals mapping
     {
-        int _x = uv.x*(o.model->normals_map.width - 1);
-        int _y = uv.y*(o.model->normals_map.height - 1);
+        int _x = uv.x*(o.model->normals_map.width() - 1);
+        int _y = uv.y*(o.model->normals_map.height() - 1);
 
         if (o.model->nm_tangent) // tangent space normal mapping
         {
@@ -161,8 +161,8 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
     {
         Vector3 r = normalize(sub(mul(n, dotProduct(n, l) * 2), l)); // reflected light
 
-        int _x = uv.x*(o.model->specular_map.width - 1);
-        int _y = uv.y*(o.model->specular_map.height - 1);
+        int _x = uv.x*(o.model->specular_map.width() - 1);
+        int _y = uv.y*(o.model->specular_map.height() - 1);
 
         spec_intensity = (float)o.model->specular_map(_x, _y).r / 127.0f;
 
@@ -179,12 +179,12 @@ __forceinline Color FragmentShader(Object &o, Vector3 &bc_world)
 
 void draw(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
 {
-    screen_offset.x = buffer.width / 2;
-    screen_offset.y = buffer.height / 2;
+    screen_offset.x = buffer.width() / 2;
+    screen_offset.y = buffer.height() / 2;
 
-    _texture_mapping = (e_texture && o.model->texture_map.data != NULL);
-    _normal_mapping = (e_normals && o.model->normals_map.data != NULL);
-    _specular_mapping = (e_specular && o.model->specular_map.data != NULL);
+    _texture_mapping = (e_texture && o.model->texture_map.data() != NULL);
+    _normal_mapping = (e_normals && o.model->normals_map.data() != NULL);
+    _specular_mapping = (e_specular && o.model->specular_map.data() != NULL);
     _flat_shading = (e_flat_shading || o.model->flat_shading);
 
     for (int i = 0; i < o.model->triangles.size(); i++)
@@ -203,14 +203,14 @@ void draw(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
 void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
 {
     // calculating the rectangle to draw pixels within
-    int rect[4] = { buffer.width - 1, buffer.height - 1, 0, 0 };
+    int rect[4] = { buffer.width() - 1, buffer.height() - 1, 0, 0 };
 
     for (int k = 0; k < 3; k++)
     {
         rect[0] = _max(0, _min(rect[0], tri_screen[k].x));
         rect[1] = _max(0, _min(rect[1], tri_screen[k].y));
-        rect[2] = _min(buffer.width - 1, _max(rect[2], tri_screen[k].x));
-        rect[3] = _min(buffer.height - 1, _max(rect[3], tri_screen[k].y));
+        rect[2] = _min(buffer.width() - 1, _max(rect[2], tri_screen[k].x));
+        rect[3] = _min(buffer.height() - 1, _max(rect[3], tri_screen[k].y));
     }
 
     // filling the rectangle with pixels
@@ -232,11 +232,10 @@ void fillTriangle(Object &o, FrameBuffer &buffer, ZBuffer &z_buffer)
             bc_world = div(bc_world, (bc_world.x + bc_world.y + bc_world.z)); // normalize, divide by the sum
 
             float _z = tri_screen[0].z*bc_screen.x + tri_screen[1].z*bc_screen.y + tri_screen[2].z*bc_screen.z;
-            int idx = p.x + p.y*z_buffer.width;
 
-            if (_z > z_buffer[idx])
+            if (_z > z_buffer(p.x, p.y))
             {
-                z_buffer[idx] = _z;
+                z_buffer(p.x, p.y) = _z;
                 Color c = FragmentShader(o, bc_world);
                 buffer(p.x, p.y) = c;  // draw the pixel finally
             }

@@ -1,7 +1,7 @@
 #include "program/program.h"
 
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, int nCmdShow)
+int main()
 {
     Program program("AMK Renderer ", 1000, 640);
 

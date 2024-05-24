@@ -2,139 +2,139 @@
 #define array_included
 
 #include <cassert>
+#include <cstring>
+#include <cstdint>
 #include "common.h"
 
 //---------------------------------
 //   Dynamic Array Structure
-//   you must use "reserve()"
-//   if you want to add elements
 //---------------------------------
 template<typename T> struct Array
 {
-    int _size, _length;
-    T* data;
+public:
 
-    Array() { _size = 0;  _length = 0;  data = NULL; }
-    Array(int __size) { init(__size); }
-    Array(int __size, T* _data) { init(__size, _data); }
+    Array() : _capacity(0), _size(0), _data(NULL) {}
 
-    inline int capacity() const { return _size; }
-    inline int size() const { return _length; }
+    Array(size_t __capacity, T* __data = NULL) { init(__capacity, __data); }
 
-    inline T operator[](int i) const { AMK_ASSERT(i < _size);  return data[i]; }
-    inline T &operator[](int i) { AMK_ASSERT(i < _size);  return data[i]; }
+    inline size_t capacity() const { return _capacity; }
+    inline size_t size() const { return _size; }
+    inline T* data() const { return _data; }
 
-    void init(int __size)
+    inline T operator[](size_t i) const { AMK_ASSERT(i < _capacity);  return _data[i]; }
+    inline T &operator[](size_t i) { AMK_ASSERT(i < _capacity);  return _data[i]; }
+
+    void init(size_t __capacity, T* __data = NULL)
     {
-        _size = __size;
-        _length = _size;
-        data = new T[_size];
+        this->_capacity = __capacity;
+        this->_size = _capacity;
 
-        // initialize the memory to zero
-        unsigned char* p = (unsigned char*)data;
-        for (int i = 0; i < _size * sizeof(T); i++) { p[i] = 0; }
-    }
-
-    void init(int __size, T* _data)
-    {
-        _size = __size;
-        _length = _size;
-        data = _data;
+        if (__data != NULL)
+        {
+            this->_data = __data;
+        }
+        else
+        {
+            _data = new T[_capacity];
+            std::memset(_data, 0, _capacity * sizeof(T));
+        }
     }
 
     void release()
     {
-        if (data != NULL)
+        if (_data != NULL)
         {
-            delete[] data;
-            data = NULL;
+            delete[] _data;
+            _data = NULL;
+            _capacity = 0;
             _size = 0;
-            _length = 0;
         }
     }
 
-    void resize(int __size)
+    void resize(size_t __size)
     {
         release();
         init(__size);
     }
 
-    void reserve(int __size)
+    void reserve(size_t __size)
     {
         release();
         init(__size);
-        _length = 0;
+        _size = 0;
     }
 
     void add(T val)
     {
-        if (data == NULL) { return; }
-
-        // if length eceeds the capacity
-        // realloctate double the amount of memory
-        if (_length >= _size)
+        if (_data == NULL)
         {
-            _size *= 2;
-
-            // initialize & copy new buffer
-            T* tmp = new T[_size];
-            for (int i = 0; i < _length; i++) { tmp[i] = data[i]; }
-
-            delete[] data;
-            data = tmp;
+            reserve(5);
         }
 
-        data[_length] = val;
-        _length += 1;
+        // if length eceeds the capacity
+            // realloctate double the amount of memory
+        if (_size >= _capacity)
+        {
+            // initialize & copy new buffer
+            _capacity *= 2;
+            T* tmp = new T[_capacity];
+
+            for (int i = 0; i < _size; i++) { tmp[i] = _data[i]; }
+
+            delete[] _data;
+            _data = tmp;
+        }
+
+        _data[_size] = val;
+        _size++;
     }
+
+protected:
+    T* _data;
+    size_t _capacity, _size;
 };
 
-//------------------------------------
-//   Dynamic Array Structure
-//   With 2D Meta-info & accessors
-//------------------------------------
-template<typename T> struct Buffer
+//----------------------------------------------
+//   2-Dimensional Dynamic Array Structure
+//----------------------------------------------
+template<typename T> struct Buffer : Array<T>
 {
-    int width, height, _size;
-    T *data;
+public:
 
-    inline T operator[](int i) const { AMK_ASSERT(i < size);  return data[i]; }
-    inline T &operator[](int i) { AMK_ASSERT(i < size);  return data[i]; }
-
-    inline T operator()(int x, int y) const { AMK_ASSERT(x < width && y < height);  return data[x + y * width]; }
-    inline T &operator()(int x, int y) { AMK_ASSERT(x < width && y < height);  return data[x + y * width]; }
-
-    inline int size() const { return _size; }
-
-    void init(int w, int h)
+    Buffer()
     {
-        width = w;
-        height = h;
-        _size = w * h;
-        data = new T[_size];
+        this->_data = NULL;
+        this->_size = 0;
+        this->_capacity = 0;
+        this->_width = 0;
+        this->_height = 0;
+    }
+
+    Buffer(size_t w, size_t h) { init(w, h); }
+
+    inline T operator()(size_t x, size_t y) const { AMK_ASSERT(x < _width && y < _height);  return this->_data[x + y * _width]; }
+    inline T &operator()(size_t x, size_t y) { AMK_ASSERT(x < _width && y < _height);  return this->_data[x + y * _width]; }
+
+    inline size_t width() const { return _width; }
+    inline size_t height() const { return _height; }
+
+    void init(size_t w, size_t h)
+    {
+        _width = w;
+        _height = h;
+        
+        Array<T>::init(w * h);
     }
 
     void release()
     {
-        if (data != NULL)
-        {
-            delete[] data;
-            data = NULL;
-            width = 0;
-            height = 0;
-            _size = 0;
-        }
+        Array<T>::release();
+        _width = 0;
+        _height = 0;
     }
 
-    Buffer()
-    {
-        width = 0;
-        height = 0;
-        _size = 0;
-        data = NULL;
-    }
-
-    Buffer(int w, int h) { init(w, h); }
+private:
+    size_t _width, _height;
 };
 
 #endif  // array_included
