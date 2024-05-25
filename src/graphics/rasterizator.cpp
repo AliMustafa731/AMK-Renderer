@@ -6,20 +6,41 @@
 #include <cmath>
 #include <utility>
 
-
-Vector3 Camera::project(Vector3 v)
+//
+// Render a whole 3D object
+//
+void Rasterizor::draw(Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer &z_buffer, RenderState& render_state)
 {
-    Vector3 _v;
-    float _w = 1.0;
+    screen_offset.x = buffer.width() / 2;
+    screen_offset.y = buffer.height() / 2;
 
-    if (focal_length != 0) { _w = 1.0 - (v.z / focal_length); }
+    render_state._texture_mapping = (render_state.e_texture && o.model->texture_map.data() != NULL);
+    render_state._normal_mapping = (render_state.e_normals && o.model->normals_map.data() != NULL);
+    render_state._specular_mapping = (render_state.e_specular && o.model->specular_map.data() != NULL);
+    render_state._flat_shading = (render_state.e_flat_shading || o.model->flat_shading);
 
-    if (_w != 0.0) { _v = div(v, _w); }
+    for (int i = 0; i < o.model->mesh.size(); i++)
+    {
+        Face face = o.model->mesh[i];
 
-    return _v;
+        if (Rasterizor::VertexShader(face, o, camera, buffer, z_buffer, render_state))
+        {
+            continue;  // ignore this face, (e.g. it's facing backward)
+        }
+
+        Rasterizor::fillTriangle(face, o, camera, buffer, z_buffer, render_state);
+
+        if (render_state.e_wireframe)  // only render wireframe
+        {
+            Rasterizor::drawTriangle(tri_screen, Color(255, 255, 255), buffer, z_buffer);
+        }
+    }
 }
 
-// return "true" to ignore current face
+//
+// A Function that takes a single "Face" then : Transform, Project, Scale it to screen
+// return "true" to ignore (Don't render) the "Face"
+//
 bool Rasterizor::VertexShader(Face& face, Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer& zbuffer, RenderState& render_state)
 {
     // transformation and perspective projection
@@ -47,19 +68,19 @@ bool Rasterizor::VertexShader(Face& face, Object &o, Camera& camera, FrameBuffer
         tri_screen[h].y = (tri_projected[h].y * view_scale) + screen_offset.y;
         tri_screen[h].z = tri_projected[h].z;
 
-        if (_texture_mapping || _normal_mapping || _specular_mapping)
+        if (render_state._texture_mapping || render_state._normal_mapping || render_state._specular_mapping)
         {
             face[h].uv.x = _max(0.0f, _min(1.0f, face[h].uv.x));
             face[h].uv.y = _max(0.0f, _min(1.0f, face[h].uv.y));
         }
 
-        if (!_flat_shading)
+        if (!render_state._flat_shading)
         {
             face[h].norm = normalize(transform(face[h].norm, camera.camera_matrix));
         }
 
         // optimization : computing tangent basis for "flat shading"
-        if (_flat_shading && _normal_mapping && o.model->nm_tangent)
+        if (render_state._flat_shading && render_state._normal_mapping && o.model->nm_tangent)
         {
             tangent_basis = TangentBasis(face, n);
         }
@@ -67,118 +88,17 @@ bool Rasterizor::VertexShader(Face& face, Object &o, Camera& camera, FrameBuffer
 
     if (!render_state.e_render_mode) // only render the wire-frame
     {
-        Rasterizor::drawTriangle(tri_screen, Color(255, 255, 255), buffer, zbuffer);
+        drawTriangle(tri_screen, Color(255, 255, 255), buffer, zbuffer);
         return true;
     }
 
     return false;
 }
 
-
-Color Rasterizor::FragmentShader(Face& face, Object &o, Camera& camera, Vector3 &bc_world)
-{
-    Color c(255, 255, 255);
-    float intensity = 0, spec = 0, spec_intensity = 0;
-
-    if (!_flat_shading) // interpolated normal vectors
-    {
-        n.x = face[0].norm.x*bc_world.x + face[1].norm.x*bc_world.y + face[2].norm.x*bc_world.z;
-        n.y = face[0].norm.y*bc_world.x + face[1].norm.y*bc_world.y + face[2].norm.y*bc_world.z;
-        n.z = face[0].norm.z*bc_world.x + face[1].norm.z*bc_world.y + face[2].norm.z*bc_world.z;
-        n = normalize(n);
-    }
-
-    if (_texture_mapping || _normal_mapping || _specular_mapping) // uv mapping
-    {
-        uv.x = face[0].uv.x*bc_world.x + face[1].uv.x*bc_world.y + face[2].uv.x*bc_world.z;
-        uv.y = face[0].uv.y*bc_world.x + face[1].uv.y*bc_world.y + face[2].uv.y*bc_world.z;
-    }
-
-    if (_texture_mapping) // texture mapping
-    {
-        int _x = uv.x*(o.model->texture_map.width() - 1);
-        int _y = uv.y*(o.model->texture_map.height() - 1);
-
-        c = o.model->texture_map(_x, _y);
-    }
-
-    if (_normal_mapping) // normals mapping
-    {
-        int _x = uv.x*(o.model->normals_map.width() - 1);
-        int _y = uv.y*(o.model->normals_map.height() - 1);
-
-        if (o.model->nm_tangent) // tangent space normal mapping
-        {
-            if (!_flat_shading) { tangent_basis = TangentBasis(face, n); }
-
-            n = normalize(transform(o.model->normals_map(_x, _y), tangent_basis));
-        }
-        else // object space normal mapping
-        {
-            n = normalize(transform(o.model->normals_map(_x, _y), camera.camera_matrix));
-        }
-    }
-
-    // current pixel in 3D space
-    Vector3 point = Vector3(
-        face[0].vert.x*bc_world.x + face[1].vert.x*bc_world.y + face[2].vert.x*bc_world.z,
-        face[0].vert.y*bc_world.x + face[1].vert.y*bc_world.y + face[2].vert.y*bc_world.z,
-        face[0].vert.z*bc_world.x + face[1].vert.z*bc_world.y + face[2].vert.z*bc_world.z
-    );
-
-    Vector3 l = normalize(sub(light_src, point)); // The vector from current pixel's point to the light source
-    intensity = _max(0.2f, dotProduct(n, l));  // clipp intensity at 0.2
-
-    if (_specular_mapping) // specular mapping
-    {
-        Vector3 r = normalize(sub(mul(n, dotProduct(n, l) * 2), l)); // reflected light
-
-        int _x = uv.x*(o.model->specular_map.width() - 1);
-        int _y = uv.y*(o.model->specular_map.height() - 1);
-
-        spec_intensity = (float)o.model->specular_map(_x, _y).r / 127.0f;
-
-        spec = pow(_max(0, r.z), 10);
-    }
-
-    c.r = _min(c.r*(intensity + spec_intensity * spec), 255);
-    c.g = _min(c.g*(intensity + spec_intensity * spec), 255);
-    c.b = _min(c.b*(intensity + spec_intensity * spec), 255);
-
-    return c;
-}
-
-
-void Rasterizor::draw(Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer &z_buffer, RenderState& render_state)
-{
-    screen_offset.x = buffer.width() / 2;
-    screen_offset.y = buffer.height() / 2;
-
-    _texture_mapping = (render_state.e_texture && o.model->texture_map.data() != NULL);
-    _normal_mapping = (render_state.e_normals && o.model->normals_map.data() != NULL);
-    _specular_mapping = (render_state.e_specular && o.model->specular_map.data() != NULL);
-    _flat_shading = (render_state.e_flat_shading || o.model->flat_shading);
-
-    for (int i = 0; i < o.model->mesh.size(); i++)
-    {
-        Face face = o.model->mesh[i];
-
-        if (Rasterizor::VertexShader(face, o, camera, buffer, z_buffer, render_state))
-        {
-            continue;  // ignore this face, (e.g. it's facing backward)
-        }
-
-        Rasterizor::fillTriangle(face, o, camera, buffer, z_buffer);
-
-        if (render_state.e_wireframe)  // only render wireframe
-        {
-            Rasterizor::drawTriangle(tri_screen, Color(255, 255, 255), buffer, z_buffer);
-        }
-    }
-}
-
-
-void Rasterizor::fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer &z_buffer)
+//
+// A Function used to fill a (Transformed/Projected) "Face"
+//
+void Rasterizor::fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer &z_buffer, RenderState& render_state)
 {
     // calculating the rectangle to draw pixels within
     int rect[4] = { buffer.width() - 1, buffer.height() - 1, 0, 0 };
@@ -214,20 +134,104 @@ void Rasterizor::fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer
             if (_z > z_buffer(p.x, p.y))
             {
                 z_buffer(p.x, p.y) = _z;
-                Color c = FragmentShader(face, o, camera, bc_world);
+                Color c = FragmentShader(face, o, camera, bc_world, render_state);
                 buffer(p.x, p.y) = c;  // draw the pixel finally
             }
         }
     }
 }
 
+//
+// A Function that's called at every pixel of a (Transformed/Projected) "Face"
+// It serves to determine the color of the current pixel,
+// depending on : (Textures / Normal Maps / Lightining, etc)
+//
+Color Rasterizor::FragmentShader(Face& face, Object &o, Camera& camera, Vector3 &bc_world, RenderState& render_state)
+{
+    Color c(255, 255, 255);
+    float intensity = 0, spec = 0, spec_intensity = 0;
+
+    if (!render_state._flat_shading) // interpolated normal vectors
+    {
+        n.x = face[0].norm.x*bc_world.x + face[1].norm.x*bc_world.y + face[2].norm.x*bc_world.z;
+        n.y = face[0].norm.y*bc_world.x + face[1].norm.y*bc_world.y + face[2].norm.y*bc_world.z;
+        n.z = face[0].norm.z*bc_world.x + face[1].norm.z*bc_world.y + face[2].norm.z*bc_world.z;
+        n = normalize(n);
+    }
+
+    if (render_state._texture_mapping || render_state._normal_mapping || render_state._specular_mapping) // uv mapping
+    {
+        uv.x = face[0].uv.x*bc_world.x + face[1].uv.x*bc_world.y + face[2].uv.x*bc_world.z;
+        uv.y = face[0].uv.y*bc_world.x + face[1].uv.y*bc_world.y + face[2].uv.y*bc_world.z;
+    }
+
+    if (render_state._texture_mapping) // texture mapping
+    {
+        int _x = uv.x*(o.model->texture_map.width() - 1);
+        int _y = uv.y*(o.model->texture_map.height() - 1);
+
+        c = o.model->texture_map(_x, _y);
+    }
+
+    if (render_state._normal_mapping) // normals mapping
+    {
+        int _x = uv.x*(o.model->normals_map.width() - 1);
+        int _y = uv.y*(o.model->normals_map.height() - 1);
+
+        if (o.model->nm_tangent) // tangent space normal mapping
+        {
+            if (!render_state._flat_shading) { tangent_basis = TangentBasis(face, n); }
+
+            n = normalize(transform(o.model->normals_map(_x, _y), tangent_basis));
+        }
+        else // object space normal mapping
+        {
+            n = normalize(transform(o.model->normals_map(_x, _y), camera.camera_matrix));
+        }
+    }
+
+    // current pixel in 3D space
+    Vector3 point = Vector3(
+        face[0].vert.x*bc_world.x + face[1].vert.x*bc_world.y + face[2].vert.x*bc_world.z,
+        face[0].vert.y*bc_world.x + face[1].vert.y*bc_world.y + face[2].vert.y*bc_world.z,
+        face[0].vert.z*bc_world.x + face[1].vert.z*bc_world.y + face[2].vert.z*bc_world.z
+    );
+
+    Vector3 l = normalize(sub(light_src, point)); // The vector from current pixel's point to the light source
+    intensity = _max(0.2f, dotProduct(n, l));  // clipp intensity at 0.2
+
+    if (render_state._specular_mapping) // specular mapping
+    {
+        Vector3 r = normalize(sub(mul(n, dotProduct(n, l) * 2), l)); // reflected light
+
+        int _x = uv.x*(o.model->specular_map.width() - 1);
+        int _y = uv.y*(o.model->specular_map.height() - 1);
+
+        spec_intensity = (float)o.model->specular_map(_x, _y).r / 127.0f;
+
+        spec = pow(_max(0, r.z), 10);
+    }
+
+    c.r = _min(c.r*(intensity + spec_intensity * spec), 255);
+    c.g = _min(c.g*(intensity + spec_intensity * spec), 255);
+    c.b = _min(c.b*(intensity + spec_intensity * spec), 255);
+
+    return c;
+}
+
+//
+// Draw a non-filled Triangle
+//
 void Rasterizor::drawTriangle(Vector3* v, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer)
 {
     drawLine(v[0], v[1], _c, buffer, zbuffer);
     drawLine(v[0], v[2], _c, buffer, zbuffer);
     drawLine(v[1], v[2], _c, buffer, zbuffer);
 }
-
+ 
+//
+// Draw a line
+//
 void Rasterizor::drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer)
 {
     bool steep = false;
@@ -272,6 +276,9 @@ void Rasterizor::drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffe
     }
 }
 
+//
+// change the (Orientation / Position) of the camera
+//
 void Camera::lookAt(Vector3 eye, Vector3 center, Vector3 up)
 {
     eye.x = -eye.x;
@@ -290,5 +297,20 @@ void Camera::lookAt(Vector3 eye, Vector3 center, Vector3 up)
     camera_matrix.set_col(0, x);
     camera_matrix.set_col(1, y);
     camera_matrix.set_col(2, z);
+}
+
+//
+// Perspective project a point depending on the camera (Orientation / Position)
+//
+Vector3 Camera::project(Vector3 v)
+{
+    Vector3 _v;
+    float _w = 1.0;
+
+    if (focal_length != 0) { _w = 1.0 - (v.z / focal_length); }
+
+    if (_w != 0.0) { _v = div(v, _w); }
+
+    return _v;
 }
 

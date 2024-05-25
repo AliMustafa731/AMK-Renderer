@@ -15,12 +15,19 @@ struct Camera
 
     Camera(){}
 
+    //
+    // Perspective project a point depending on the camera (Orientation / Position)
+    //
     Vector3 project(Vector3 v);
+
+    //
+    // change the (Orientation / Position) of the camera
+    //
     void lookAt(Vector3 eye, Vector3 center, Vector3 up);
 };
 
 //
-// Structure to store rendering state
+// Structure to store rendering state flags
 // used by the GUI to determine which controls to (Enable/Disable)
 //
 struct RenderState
@@ -33,6 +40,11 @@ struct RenderState
     bool e_normals;      // enable normals mapping
     bool e_specular;     // enable specular mapping
     bool e_wireframe;    // enable wire-frame
+
+    bool _texture_mapping;
+    bool _normal_mapping;
+    bool _specular_mapping;
+    bool _flat_shading;
 };
 
 //
@@ -45,16 +57,37 @@ public:
     Rasterizor() : light_src(0.4f, -0.25f, 5.0f)
     {}
 
-    // primative drawing
+    //
+    // Draw a line
+    //
     void drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
+
+    //
+    // Draw a non-filled Triangle
+    //
     void drawTriangle(Vector3* v, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
-    void fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer &z_buffer);
 
-    // shaders
+    //
+    // A Function used to fill a (Transformed/Projected) "Face"
+    //
+    void fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer &z_buffer, RenderState& render_state);
+
+    //
+    // A Function that takes a single "Face" then : Transform, Project, Scale it to screen
+    // return "true" to ignore (Don't render) the "Face"
+    //
     bool VertexShader(Face& face, Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer& zbuffer, RenderState& render_state);
-    Color FragmentShader(Face& face, Object &o, Camera& camera, Vector3 &bc_world);
 
-    // draw a 3D object
+    //
+    // A Function that's called at every pixel of a (Transformed/Projected) "Face"
+    // It serves to determine the color of the current pixel,
+    // depending on : (Textures / Normal Maps / Lightining, etc)
+    //
+    Color FragmentShader(Face& face, Object &o, Camera& camera, Vector3 &bc_world, RenderState& render_state);
+
+    //
+    // Render a whole 3D object
+    //
     void draw(Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer &z_buffer, RenderState& render_state);
 
 private:
@@ -64,24 +97,18 @@ private:
     int view_scale = 100;
 
     //---------------------------------------------------------------
-    //   Variables used internally by rendering pipline functions,
-    //   such as (VertexShader) and (FragmentShader)
+    //   Variables used internally by rendering pipline
+    //   functions : (VertexShader) and (FragmentShader)
     //---------------------------------------------------------------
 
-    // flags used to indicate which mode to render in
-    bool _texture_mapping;
-    bool _normal_mapping;
-    bool _specular_mapping;
-    bool _flat_shading;
-
-    // a matrix used for (Tangent normals mapping) across both (VertexShader) and (FragmentShader)
+    // a matrix that's used for (Tangent space normals mapping)
     Matrix3 tangent_basis;
 
     Vector3 light_src;
     Vector3 tri_projected[3];
     Vector3 tri_screen[3];
-    Vector3 n;    // normal vector used across (VertexShader) and (FragmentShader)
-    Vector2 uv;   // texture coordinate used across (VertexShader) and (FragmentShader)
+    Vector3 n;    // normal vector
+    Vector2 uv;   // texture coordinates
     float _w[3];
 };
 
