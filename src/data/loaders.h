@@ -3,7 +3,7 @@
 
 #include "graphics/graphics.h"
 
-bool loadFromOBJFile(const char* filename, Model *m);
+void Triangulate(VertexIndex* points, int count, Array<FaceIndex> &dest);
 
 bool loadImageData(const char* filename, FrameBuffer &buffer);
 

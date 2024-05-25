@@ -3,12 +3,13 @@
 
 #include <Windows.h>
 #include "graphics/graphics.h"
+#include "graphics/rasterizator.h"
 
 // ID's for buttons and controls
 
 enum ControlID
 {
-    ID_TEXTURE_MAPPING,
+    ID_TEXTURE_MAPPING = 1001,
     ID_NORMAL_MAPPING,
     ID_WIREFRAME,
     ID_FLAT_SHADING,
@@ -65,6 +66,11 @@ private:
     // control flags
     bool is_running, is_loading, need_update;
 
+    // camera & renderer
+    Camera camera;
+    Rasterizor renderer;
+    RenderState render_state;
+
     // graphics
     int width, height;
     ZBuffer zbuffer;
@@ -75,7 +81,6 @@ private:
     HDC win_hdc;
     HWND win_handle;
     BITMAPINFO bitmap_info;
-
     HWND buttons[16];
 
     // used to hold the path returned from OpenFileDialog & SaveFileDialog

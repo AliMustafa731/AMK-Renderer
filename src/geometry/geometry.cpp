@@ -1,5 +1,6 @@
 
 #include "geometry/geometry.h"
+#include "graphics/graphics.h"
 #include <cmath>
 
 
@@ -38,17 +39,17 @@ Vector3 barycentric(Vector3* v, Vector2i p)
     return Vector3(1.0f-r.x-r.y, r.y, r.x);
 }
 
-Matrix3 TangentBasis(Vector3 *tri, Vector2 *uv, Vector3 n)
+Matrix3 TangentBasis(Face face, Vector3 n)
 {
     Matrix3 A, B;
 
-    A.set_row(0, sub(tri[1], tri[0]));
-    A.set_row(1, sub(tri[2], tri[0]));
+    A.set_row(0, sub(face[1].vert, face[0].vert));
+    A.set_row(1, sub(face[2].vert, face[0].vert));
     A.set_row(2, n);
     A = inverse(A);
 
-    Vector3 i = transform(Vector3(uv[1].x - uv[0].x, uv[2].x - uv[0].x, 0), A);
-    Vector3 j = transform(Vector3(uv[1].y - uv[0].y, uv[2].y - uv[0].y, 0), A);
+    Vector3 i = transform(Vector3(face[1].uv.x - face[0].uv.x, face[2].uv.x - face[0].uv.x, 0), A);
+    Vector3 j = transform(Vector3(face[1].uv.y - face[0].uv.y, face[2].uv.y - face[0].uv.y, 0), A);
 
     B.set_col(0, normalize(i));
     B.set_col(1, normalize(j));

@@ -13,7 +13,9 @@ Vector3 normalize(Vector3 v);
 
 Vector3 barycentric(Vector3* v, Vector2i p);
 
-Matrix3 TangentBasis(Vector3 *tri, Vector2 *uv, Vector3 n);
+struct Face;
+
+Matrix3 TangentBasis(Face face, Vector3 n);
 
 Matrix3 rotation_x(float angle);
 Matrix3 rotation_y(float angle);

@@ -114,11 +114,18 @@ void Program::init(const char* name, int _w, int _h)
 
     // load a test 3D model
 
-    lookAt(Vector3(0, 0, 5), Vector3(0, 0, 0), Vector3(0, 1, 0));
+    camera.lookAt(Vector3(0, 0, 5), Vector3(0, 0, 0), Vector3(0, 1, 0));
     object.position = Vector3(0.0, 0.0, 0.0);
     object.model = &main_model;
 
     this->loadMainModel("brick.obj");
+
+    this->render_state.e_flat_shading = false;
+    this->render_state.e_normals = true;
+    this->render_state.e_render_mode = true;
+    this->render_state.e_specular = true;
+    this->render_state.e_texture = true;
+    this->render_state.e_wireframe = false;
 }
 
 //---------------------------------
@@ -163,14 +170,14 @@ void Program::update()
     }
     if (GetKeyState('W') & 0x8000)
     {
-        camera_offset.z -= 0.2;
-        camera_offset.z = _max(camera_offset.z, -3.0);
+        camera.camera_offset.z -= 0.2;
+        camera.camera_offset.z = _max(camera.camera_offset.z, -3.0);
         need_update = true;
     }
     if (GetKeyState('S') & 0x8000)
     {
-        camera_offset.z += 0.2;
-        camera_offset.z = _min(camera_offset.z, 2.0);
+        camera.camera_offset.z += 0.2;
+        camera.camera_offset.z = _min(camera.camera_offset.z, 2.0);
         need_update = true;
     }
 
@@ -182,10 +189,10 @@ void Program::update()
         if (angle_y > 6.283) angle_y = 0;
         if (angle_x > 6.283) angle_x = 0;
 
-        camera_matrix = mul_matrix(rotation_y(angle_y), rotation_x(angle_x));
+        camera.camera_matrix = mul_matrix(rotation_y(angle_y), rotation_x(angle_x));
         clearFrameBuffer();
 
-        draw(object, frameBuffer, zbuffer);
+        renderer.draw(object, camera, frameBuffer, zbuffer, render_state);
         StretchDIBits
         (
             win_hdc, 0, 0, frameBuffer.width(), frameBuffer.height(), 0, 0, frameBuffer.width(), frameBuffer.height(),
@@ -300,11 +307,11 @@ void Program::onCreate(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         "BUTTON", "Wireframe", WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,
         820, 290, 170, 30, hwnd, (HMENU)ID_WIREFRAME, GetModuleHandle(NULL), NULL
     );
-    CheckDlgButton(hwnd, ID_TEXTURE_MAPPING, e_texture);
-    CheckDlgButton(hwnd, ID_NORMAL_MAPPING, e_normals);
-    CheckDlgButton(hwnd, ID_SPECULAR_MAPPING, e_specular);
-    CheckDlgButton(hwnd, ID_FLAT_SHADING, e_flat_shading);
-    CheckDlgButton(hwnd, ID_WIREFRAME, e_wireframe);
+    CheckDlgButton(hwnd, ID_TEXTURE_MAPPING, render_state.e_texture);
+    CheckDlgButton(hwnd, ID_NORMAL_MAPPING, render_state.e_normals);
+    CheckDlgButton(hwnd, ID_SPECULAR_MAPPING, render_state.e_specular);
+    CheckDlgButton(hwnd, ID_FLAT_SHADING, render_state.e_flat_shading);
+    CheckDlgButton(hwnd, ID_WIREFRAME, render_state.e_wireframe);
 
     buttons[8] = CreateWindow
     (
@@ -323,13 +330,13 @@ void Program::onCommand(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     int wmId = LOWORD(wParam);
 
-    if (wmId == ID_TEXTURE_MAPPING) e_texture = IsDlgButtonChecked(hwnd, wmId);
-    if (wmId == ID_NORMAL_MAPPING) e_normals = IsDlgButtonChecked(hwnd, wmId);
-    if (wmId == ID_SPECULAR_MAPPING) e_specular = IsDlgButtonChecked(hwnd, wmId);
-    if (wmId == ID_WIREFRAME) e_wireframe = IsDlgButtonChecked(hwnd, wmId);
-    if (wmId == ID_FLAT_SHADING) e_flat_shading = IsDlgButtonChecked(hwnd, wmId);
+    if (wmId == ID_TEXTURE_MAPPING) render_state.e_texture = IsDlgButtonChecked(hwnd, wmId);
+    if (wmId == ID_NORMAL_MAPPING) render_state.e_normals = IsDlgButtonChecked(hwnd, wmId);
+    if (wmId == ID_SPECULAR_MAPPING) render_state.e_specular = IsDlgButtonChecked(hwnd, wmId);
+    if (wmId == ID_WIREFRAME) render_state.e_wireframe = IsDlgButtonChecked(hwnd, wmId);
+    if (wmId == ID_FLAT_SHADING) render_state.e_flat_shading = IsDlgButtonChecked(hwnd, wmId);
 
-    e_render_mode = IsDlgButtonChecked(hwnd, ID_RENDER_MODE);
+    render_state.e_render_mode = IsDlgButtonChecked(hwnd, ID_RENDER_MODE);
 
     if (wmId == ID_LOAD_FILE)
     {
@@ -365,32 +372,32 @@ void Program::onCommand(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void Program::onKeyDown(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (e_render_mode && !(Program::main_program->is_loading))
+    if (render_state.e_render_mode && !(Program::main_program->is_loading))
     {
         if (wParam == VK_SPACE && IsWindowEnabled(GetDlgItem(hwnd, ID_WIREFRAME)))
         {
-            e_wireframe = !(e_wireframe);
-            CheckDlgButton(hwnd, ID_WIREFRAME, e_wireframe);
+            render_state.e_wireframe = !(render_state.e_wireframe);
+            CheckDlgButton(hwnd, ID_WIREFRAME, render_state.e_wireframe);
         }
         else if (wParam == 'N' && IsWindowEnabled(GetDlgItem(hwnd, ID_NORMAL_MAPPING)))
         {
-            e_normals = !(e_normals);
-            CheckDlgButton(hwnd, ID_NORMAL_MAPPING, e_normals);
+            render_state.e_normals = !(render_state.e_normals);
+            CheckDlgButton(hwnd, ID_NORMAL_MAPPING, render_state.e_normals);
         }
         else if (wParam == 'P' && IsWindowEnabled(GetDlgItem(hwnd, ID_SPECULAR_MAPPING)))
         {
-            e_specular = !(e_specular);
-            CheckDlgButton(hwnd, ID_SPECULAR_MAPPING, e_specular);
+            render_state.e_specular = !(render_state.e_specular);
+            CheckDlgButton(hwnd, ID_SPECULAR_MAPPING, render_state.e_specular);
         }
         else if (wParam == 'T' && IsWindowEnabled(GetDlgItem(hwnd, ID_TEXTURE_MAPPING)))
         {
-            e_texture = !(e_texture);
-            CheckDlgButton(hwnd, ID_TEXTURE_MAPPING, e_texture);
+            render_state.e_texture = !(render_state.e_texture);
+            CheckDlgButton(hwnd, ID_TEXTURE_MAPPING, render_state.e_texture);
         }
         else if (wParam == 'F' && IsWindowEnabled(GetDlgItem(hwnd, ID_FLAT_SHADING)))
         {
-            e_flat_shading = !(e_flat_shading);
-            CheckDlgButton(hwnd, ID_FLAT_SHADING, e_flat_shading);
+            render_state.e_flat_shading = !(render_state.e_flat_shading);
+            CheckDlgButton(hwnd, ID_FLAT_SHADING, render_state.e_flat_shading);
         }
     }
 
@@ -433,7 +440,8 @@ void Program::loadMainModel(const char* filename)
 {
     this->main_model.release();
 
-    loadFromOBJFile(filename, &this->main_model);
+    this->main_model.loadFromOBJFile(filename);
+    this->EnableAllButtons(true);
 
     // Enabling & Disabling controls depending on which textures the model has
     EnableWindow(GetDlgItem(win_handle, ID_TEXTURE_MAPPING), (main_model.texture_map.data() != NULL));
@@ -441,7 +449,6 @@ void Program::loadMainModel(const char* filename)
     EnableWindow(GetDlgItem(win_handle, ID_SPECULAR_MAPPING), (main_model.specular_map.data() != NULL));
     EnableWindow(GetDlgItem(win_handle, ID_FLAT_SHADING), (!main_model.flat_shading));
 
-    this->EnableAllButtons(true);
     this->is_loading = false;
 }
 
