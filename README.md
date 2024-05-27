@@ -16,4 +16,6 @@ download from [here](https://mega.nz/file/YR1C2RQT#D1NAnhoY5KbOAIfsM1NPFcCijdGZT
 
 ### Preview
 ![Demo Screenshot](./screenshot.jpg)
-
+  
+### Resources
+[software rendering in 500 lines of code](https://github.com/ssloy/tinyrenderer/wiki/Lesson-0:-getting-started)
