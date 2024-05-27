@@ -11,7 +11,7 @@ float dotProduct(Vector3 v1, Vector3 v2);
 Vector3 crossProduct(Vector3 v1, Vector3 v2);
 Vector3 normalize(Vector3 v);
 
-Vector3 barycentric(Vector3* v, Vector2i p);
+Vector3 barycentric(Vector3 v1, Vector3 v2, Vector3 v3, Vector2i p);
 
 struct Face;
 

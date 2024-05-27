@@ -1,15 +1,18 @@
 #ifndef vector_included
 #define vector_included
 
+// forward declarations
+template<typename T> struct Vec2;
+template<typename T> struct Vec3;
+template<typename T> struct Vec4;
 
 template<typename T> struct Vec2
 {
     T x, y;
 
-    Vec2(T _x, T _y)
-    {
-        x = _x;  y = _y;
-    }
+    Vec2(T _x, T _y) : x(_x), y(_y) {}
+    Vec2(Vec3<T> v);
+    Vec2(Vec4<T> v);
     Vec2() {}
 };
 
@@ -17,10 +20,9 @@ template<typename T> struct Vec3
 {
     T x, y, z;
 
-    Vec3(T _x, T _y, T _z)
-    {
-        x = _x;  y = _y;   z = _z;
-    }
+    Vec3(T _x, T _y, T _z) : x(_x), y(_y), z(_z) {}
+    Vec3(Vec2<T> v);
+    Vec3(Vec4<T> v);
     Vec3() {}
 };
 
@@ -28,13 +30,23 @@ template<typename T> struct Vec4
 {
     T x, y, z, w;
 
-    Vec4(T _x, T _y, T _z, T _w)
-    {
-        x = _x;  y = _y;  z = _z;  w = _w;
-    }
+    Vec4(T _x, T _y, T _z, T _w) : x(_x), y(_y), z(_z), w(_w) {}
+    Vec4(Vec2<T> v);
+    Vec4(Vec3<T> v);
     Vec4() {}
 };
 
+// embedding vectors of different sizes
+template<typename T> Vec2<T>::Vec2(Vec3<T> v) : x(v.x), y(v.y) {}
+template<typename T> Vec2<T>::Vec2(Vec4<T> v) : x(v.x), y(v.y) {}
+
+template<typename T> Vec3<T>::Vec3(Vec2<T> v) : x(v.x), y(v.y), z(0) {}
+template<typename T> Vec3<T>::Vec3(Vec4<T> v) : x(v.x), y(v.y), z(v.z) {}
+
+template<typename T> Vec4<T>::Vec4(Vec2<T> v) : x(v.x), y(v.y), z(0), w(0) {}
+template<typename T> Vec4<T>::Vec4(Vec3<T> v) : x(v.x), y(v.y), z(v.z), w(1.0f) {}
+
+// arithmetic operations
 template<typename T> Vec2<T> inline add(Vec2<T> v1, Vec2<T> v2) { return Vec2<T>(v1.x + v2.x, v1.y + v2.y); }
 template<typename T> Vec3<T> inline add(Vec3<T> v1, Vec3<T> v2) { return Vec3<T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z); }
 template<typename T> Vec4<T> inline add(Vec4<T> v1, Vec4<T> v2) { return Vec4<T>(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z, v1.w + v2.w); }
@@ -48,6 +60,7 @@ template<typename T> Vec2<T> inline div(Vec2<T> v1, float _x) { return Vec2<T>(v
 template<typename T> Vec3<T> inline div(Vec3<T> v1, float _x) { return Vec3<T>(v1.x / _x, v1.y / _x, v1.z / _x); }
 template<typename T> Vec4<T> inline div(Vec4<T> v1, float _x) { return Vec4<T>(v1.x / _x, v1.y / _x, v1.z / _x, v1.w / _x); }
 
+// type definitions
 typedef Vec2<float> Vector2;
 typedef Vec3<float> Vector3;
 typedef Vec4<float> Vector4;

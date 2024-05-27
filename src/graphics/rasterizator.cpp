@@ -32,7 +32,7 @@ void Rasterizor::draw(Object &o, Camera& camera, FrameBuffer &buffer, ZBuffer &z
 
         if (render_state.e_wireframe)  // only render wireframe
         {
-            Rasterizor::drawTriangle(tri_screen, Color(255, 255, 255), buffer, z_buffer);
+            Rasterizor::drawTriangle(tri_screen[0], tri_screen[1], tri_screen[2], Color(255, 255, 255), buffer, z_buffer);
         }
     }
 }
@@ -51,22 +51,24 @@ bool Rasterizor::VertexShader(Face& face, Object &o, Camera& camera, FrameBuffer
         face[k].vert = sub(face[k].vert, camera.camera_offset);
 
         tri_projected[k] = camera.project(face[k].vert);
-        _w[k] = 1.0 - (face[k].vert.z / camera.focal_length);
     }
 
     // back-face removal
     n = normalize(crossProduct(sub(tri_projected[2], tri_projected[0]), sub(tri_projected[1], tri_projected[0])));
 
-    if (n.z < 0 && render_state.e_render_mode) return true; // the triangle is facing backward, ignore it
+    if (n.z < 0 && render_state.e_render_mode)
+    {
+        return true; // the triangle is facing backward, ignore it
+    }
 
     n = normalize(crossProduct(sub(face[2].vert, face[0].vert), sub(face[1].vert, face[0].vert)));
 
     // translating 3D points to the screen
     for (int h = 0; h < 3; h++)
     {
+        tri_screen[h] = tri_projected[h];
         tri_screen[h].x = (tri_projected[h].x * view_scale) + screen_offset.x;
         tri_screen[h].y = (tri_projected[h].y * view_scale) + screen_offset.y;
-        tri_screen[h].z = tri_projected[h].z;
 
         if (render_state._texture_mapping || render_state._normal_mapping || render_state._specular_mapping)
         {
@@ -88,7 +90,7 @@ bool Rasterizor::VertexShader(Face& face, Object &o, Camera& camera, FrameBuffer
 
     if (!render_state.e_render_mode) // only render the wire-frame
     {
-        drawTriangle(tri_screen, Color(255, 255, 255), buffer, zbuffer);
+        drawTriangle(tri_screen[0], tri_screen[1], tri_screen[2], Color(255, 255, 255), buffer, zbuffer);
         return true;
     }
 
@@ -119,15 +121,19 @@ void Rasterizor::fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer
     {
         for (p.y = rect[1]; p.y <= rect[3]; p.y++)
         {
-            bc_screen = barycentric(tri_screen, p);
+            bc_screen = barycentric(tri_screen[0], tri_screen[1], tri_screen[2], p);
 
             if (bc_screen.x <= 0 || bc_screen.y <= 0 || bc_screen.z <= 0)
             {
                 continue;  // pixel is outside the triangle, ignore it
             }
 
-            bc_world = Vector3(bc_screen.x / _w[0], bc_screen.y / _w[1], bc_screen.z / _w[2]); // apply perspective deformation
-            bc_world = div(bc_world, (bc_world.x + bc_world.y + bc_world.z)); // normalize, divide by the sum
+            // apply perspective deformation
+            // divide by the 4th component
+            bc_world = Vector3(bc_screen.x / tri_projected[0].w, bc_screen.y / tri_projected[1].w, bc_screen.z / tri_projected[2].w);
+
+            // normalize, divide by the sum
+            bc_world = div(bc_world, (bc_world.x + bc_world.y + bc_world.z));
 
             float _z = tri_screen[0].z*bc_screen.x + tri_screen[1].z*bc_screen.y + tri_screen[2].z*bc_screen.z;
 
@@ -222,11 +228,11 @@ Color Rasterizor::FragmentShader(Face& face, Object &o, Camera& camera, Vector3 
 //
 // Draw a non-filled Triangle
 //
-void Rasterizor::drawTriangle(Vector3* v, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer)
+void Rasterizor::drawTriangle(Vector3 v1, Vector3 v2, Vector3 v3, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer)
 {
-    drawLine(v[0], v[1], _c, buffer, zbuffer);
-    drawLine(v[0], v[2], _c, buffer, zbuffer);
-    drawLine(v[1], v[2], _c, buffer, zbuffer);
+    drawLine(v1, v2, _c, buffer, zbuffer);
+    drawLine(v1, v3, _c, buffer, zbuffer);
+    drawLine(v2, v3, _c, buffer, zbuffer);
 }
  
 //
@@ -302,14 +308,21 @@ void Camera::lookAt(Vector3 eye, Vector3 center, Vector3 up)
 //
 // Perspective project a point depending on the camera (Orientation / Position)
 //
-Vector3 Camera::project(Vector3 v)
+Vector4 Camera::project(Vector3 v)
 {
-    Vector3 _v;
-    float _w = 1.0;
+    Vector4 _v;
 
-    if (focal_length != 0) { _w = 1.0 - (v.z / focal_length); }
+    if (focal_length != 0.0f)
+    {
+        _v.w = 1.0f - (v.z / focal_length);
 
-    if (_w != 0.0) { _v = div(v, _w); }
+        if (_v.w != 0.0f)
+        {
+            // apply perspective deformation
+            // divide by the 4th component
+            _v = Vector4(v.x / _v.w, v.y / _v.w, v.z / _v.w, _v.w);
+        }
+    }
 
     return _v;
 }

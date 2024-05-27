@@ -27,11 +27,11 @@ Vector4 transform(Vector4 v, Matrix4 m)
     return a;
 }
 
-Vector3 barycentric(Vector3* v, Vector2i p)
+Vector3 barycentric(Vector3 v1, Vector3 v2, Vector3 v3, Vector2i p)
 {
-    Vector3 v1(v[2].x - v[0].x, v[1].x - v[0].x, v[0].x - p.x);
-    Vector3 v2(v[2].y - v[0].y, v[1].y - v[0].y, v[0].y - p.y);
-    Vector3 r = crossProduct(v1, v2);
+    Vector3 a1(v3.x - v1.x, v2.x - v1.x, v1.x - p.x);
+    Vector3 a2(v3.y - v1.y, v2.y - v1.y, v1.y - p.y);
+    Vector3 r = crossProduct(a1, a2);
 
     r.x = r.x / r.z; // normalize
     r.y = r.y / r.z; // normalize

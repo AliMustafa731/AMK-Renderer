@@ -18,7 +18,7 @@ struct Camera
     //
     // Perspective project a point depending on the camera (Orientation / Position)
     //
-    Vector3 project(Vector3 v);
+    Vector4 project(Vector3 v);
 
     //
     // change the (Orientation / Position) of the camera
@@ -65,7 +65,7 @@ public:
     //
     // Draw a non-filled Triangle
     //
-    void drawTriangle(Vector3* v, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
+    void drawTriangle(Vector3 v1, Vector3 v2, Vector3 v3, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
 
     //
     // A Function used to fill a (Transformed/Projected) "Face"
@@ -105,11 +105,10 @@ private:
     Matrix3 tangent_basis;
 
     Vector3 light_src;
-    Vector3 tri_projected[3];
-    Vector3 tri_screen[3];
+    Vector4 tri_projected[3];
+    Vector4 tri_screen[3];
     Vector3 n;    // normal vector
     Vector2 uv;   // texture coordinates
-    float _w[3];
 };
 
 #endif // rasterizator_h
