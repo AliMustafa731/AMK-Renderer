@@ -17,13 +17,19 @@ public:
 
     Array(size_t __capacity, T* __data = NULL) { init(__capacity, __data); }
 
+    // accessors
     inline size_t capacity() const { return _capacity; }
     inline size_t size() const { return _size; }
     inline T* data() const { return _data; }
 
+    // getters and setters
     inline T operator[](size_t i) const { AMK_ASSERT(i < _capacity);  return _data[i]; }
     inline T &operator[](size_t i) { AMK_ASSERT(i < _capacity);  return _data[i]; }
 
+    //
+    // create an array with specified capacity, with optional "data" pointer parameter.
+    // memory is allocated only if "data" is NULL (e.g. not passed as argument).
+    //
     void init(size_t __capacity, T* __data = NULL)
     {
         this->_capacity = __capacity;
@@ -51,12 +57,19 @@ public:
         }
     }
 
+    //
+    // re-allocate a memory with new size and initialize it with empty elemnts.
+    //
     void resize(size_t __size)
     {
         release();
         init(__size);
     }
 
+    //
+    // only re-allocate a memory with new size,
+    // not filled with empty elemnts. (you can add elemnts to the array)
+    //
     void reserve(size_t __size)
     {
         release();
@@ -64,6 +77,7 @@ public:
         _size = 0;
     }
 
+    // add an element to the array
     void add(T val)
     {
         if (_data == NULL)
@@ -112,6 +126,7 @@ public:
 
     Buffer(size_t w, size_t h) { init(w, h); }
 
+    // setters and getters
     inline T operator()(size_t x, size_t y) const { AMK_ASSERT(x < _width && y < _height);  return this->_data[x + y * _width]; }
     inline T &operator()(size_t x, size_t y) { AMK_ASSERT(x < _width && y < _height);  return this->_data[x + y * _width]; }
 

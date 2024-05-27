@@ -7,9 +7,14 @@ struct Matrix3
 {
     float m[3][3];
 
+    // return the identity matrix
     static Matrix3 Identity();
-    void set_row(int _i, Vector3 v);
-    void set_col(int _i, Vector3 v);
+
+    // fill the specified "row" of the matrix with a vector (v)
+    void set_row(int _i, Vector3f v);
+
+    // fill the specified "column" of the matrix with a vector (v)
+    void set_col(int _i, Vector3f v);
     Matrix3() {}
 };
 
@@ -17,12 +22,18 @@ struct Matrix4
 {
     float m[4][4];
 
+    // return the identity matrix
     static Matrix4 Identity();
-    void set_row(int _i, Vector4 v);
-    void set_col(int _i, Vector4 v);
+
+    // fill the specified "row" of the matrix with a vector (v)
+    void set_row(int _i, Vector4f v);
+
+    // fill the specified "column" of the matrix with a vector (v)
+    void set_col(int _i, Vector4f v);
     Matrix4() {}
 };
 
+// matrix multiplication
 Matrix3 mul_matrix(Matrix3 m1, Matrix3 m2);
 Matrix4 mul_matrix(Matrix4 m1, Matrix4 m2);
 

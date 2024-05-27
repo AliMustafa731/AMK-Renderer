@@ -114,8 +114,8 @@ void Program::init(const char* name, int _w, int _h)
 
     // load a test 3D model
 
-    camera.lookAt(Vector3(0, 0, 5), Vector3(0, 0, 0), Vector3(0, 1, 0));
-    object.position = Vector3(0.0, 0.0, 0.0);
+    camera.lookAt(Vector3f(0, 0, 5), Vector3f(0, 0, 0), Vector3f(0, 1, 0));
+    object.position = Vector3f(0.0, 0.0, 0.0);
     object.model = &main_model;
 
     this->loadMainModel("brick.obj");

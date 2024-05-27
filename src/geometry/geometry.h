@@ -4,24 +4,35 @@
 #include "geometry/matrix.h"
 #include "geometry/vector.h"
 
-Vector3 transform(Vector3 v, Matrix3 m);
-Vector4 transform(Vector4 v, Matrix4 m);
+// multiply a matrix & vector
+Vector3f transform(Vector3f v, Matrix3 m);
+Vector4f transform(Vector4f v, Matrix4 m);
 
-float dotProduct(Vector3 v1, Vector3 v2);
-Vector3 crossProduct(Vector3 v1, Vector3 v2);
-Vector3 normalize(Vector3 v);
+float dotProduct(Vector3f v1, Vector3f v2);
+Vector3f crossProduct(Vector3f v1, Vector3f v2);
 
-Vector3 barycentric(Vector3 v1, Vector3 v2, Vector3 v3, Vector2i p);
+// normalize a vector to have a magnitude of (1)
+Vector3f normalize(Vector3f v);
+
+//
+// calulate the weigted coordinates of point (p) with respect to triangle (v1, v2, v3)
+// for more info, see :
+// https://github.com/ssloy/tinyrenderer/wiki/Lesson-2:-Triangle-rasterization-and-back-face-culling
+//
+Vector3f barycentric(Vector3f v1, Vector3f v2, Vector3f v3, Vector2i p);
 
 struct Face;
 
-Matrix3 TangentBasis(Face face, Vector3 n);
+//
+// calculate the tangent basis matrix required for "Normals mapping"
+// for more info, see :
+// https://github.com/ssloy/tinyrenderer/wiki/Lesson-6bis:-tangent-space-normal-mapping
+//
+Matrix3 TangentBasis(Face face, Vector3f n);
 
+// calculate a matrix that produces a (rotation over an axis) transformation
 Matrix3 rotation_x(float angle);
 Matrix3 rotation_y(float angle);
 Matrix3 rotation_z(float angle);
-
-float length(Vector3 &v);
-
 
 #endif // geometry_h

@@ -3,10 +3,10 @@
 #include "graphics/graphics.h"
 #include <cmath>
 
-
-Vector3 transform(Vector3 v, Matrix3 m)
+// multiply a matrix & vector
+Vector3f transform(Vector3f v, Matrix3 m)
 {
-    Vector3 a;
+    Vector3f a;
 
     a.x = v.x*m.m[0][0] + v.y*m.m[1][0] + v.z*m.m[2][0];
     a.y = v.x*m.m[0][1] + v.y*m.m[1][1] + v.z*m.m[2][1];
@@ -15,9 +15,10 @@ Vector3 transform(Vector3 v, Matrix3 m)
     return a;
 }
 
-Vector4 transform(Vector4 v, Matrix4 m)
+// multiply a matrix & vector
+Vector4f transform(Vector4f v, Matrix4 m)
 {
-    Vector4 a;
+    Vector4f a;
 
     a.x = v.x*m.m[0][0] + v.y*m.m[1][0] + v.z*m.m[2][0] + m.m[3][0];
     a.y = v.x*m.m[0][1] + v.y*m.m[1][1] + v.z*m.m[2][1] + m.m[3][1];
@@ -27,19 +28,29 @@ Vector4 transform(Vector4 v, Matrix4 m)
     return a;
 }
 
-Vector3 barycentric(Vector3 v1, Vector3 v2, Vector3 v3, Vector2i p)
+//
+// calulate the weigted coordinates of point (p) with respect to triangle (v1, v2, v3)
+// for more info, see :
+// https://github.com/ssloy/tinyrenderer/wiki/Lesson-2:-Triangle-rasterization-and-back-face-culling
+//
+Vector3f barycentric(Vector3f v1, Vector3f v2, Vector3f v3, Vector2i p)
 {
-    Vector3 a1(v3.x - v1.x, v2.x - v1.x, v1.x - p.x);
-    Vector3 a2(v3.y - v1.y, v2.y - v1.y, v1.y - p.y);
-    Vector3 r = crossProduct(a1, a2);
+    Vector3f a1(v3.x - v1.x, v2.x - v1.x, v1.x - p.x);
+    Vector3f a2(v3.y - v1.y, v2.y - v1.y, v1.y - p.y);
+    Vector3f r = crossProduct(a1, a2);
 
     r.x = r.x / r.z; // normalize
     r.y = r.y / r.z; // normalize
 
-    return Vector3(1.0f-r.x-r.y, r.y, r.x);
+    return Vector3f(1.0f-r.x-r.y, r.y, r.x);
 }
 
-Matrix3 TangentBasis(Face face, Vector3 n)
+//
+// calculate the tangent basis matrix required for "Normals mapping"
+// for more info, see :
+// https://github.com/ssloy/tinyrenderer/wiki/Lesson-6bis:-tangent-space-normal-mapping
+//
+Matrix3 TangentBasis(Face face, Vector3f n)
 {
     Matrix3 A, B;
 
@@ -48,8 +59,8 @@ Matrix3 TangentBasis(Face face, Vector3 n)
     A.set_row(2, n);
     A = inverse(A);
 
-    Vector3 i = transform(Vector3(face[1].uv.x - face[0].uv.x, face[2].uv.x - face[0].uv.x, 0), A);
-    Vector3 j = transform(Vector3(face[1].uv.y - face[0].uv.y, face[2].uv.y - face[0].uv.y, 0), A);
+    Vector3f i = transform(Vector3f(face[1].uv.x - face[0].uv.x, face[2].uv.x - face[0].uv.x, 0), A);
+    Vector3f j = transform(Vector3f(face[1].uv.y - face[0].uv.y, face[2].uv.y - face[0].uv.y, 0), A);
 
     B.set_col(0, normalize(i));
     B.set_col(1, normalize(j));
@@ -58,29 +69,25 @@ Matrix3 TangentBasis(Face face, Vector3 n)
     return B;
 }
 
-Vector3 normalize(Vector3 v)
+// normalize a vector to have a magnitude of (1)
+Vector3f normalize(Vector3f v)
 {
     float m = sqrt((v.x*v.x) + (v.y*v.y) + (v.z*v.z));
 
-    return Vector3(v.x / m, v.y / m, v.z / m);
+    return Vector3f(v.x / m, v.y / m, v.z / m);
 }
 
-float dotProduct(Vector3 v1, Vector3 v2)
+float dotProduct(Vector3f v1, Vector3f v2)
 {
     return v1.x*v2.x + v1.y*v2.y + v1.z*v2.z;
 }
 
-Vector3 crossProduct(Vector3 v1, Vector3 v2)
+Vector3f crossProduct(Vector3f v1, Vector3f v2)
 {
-    return Vector3(v2.y*v1.z - v2.z*v1.y, v2.z*v1.x - v2.x*v1.z, v2.x*v1.y - v2.y*v1.x);
+    return Vector3f(v2.y*v1.z - v2.z*v1.y, v2.z*v1.x - v2.x*v1.z, v2.x*v1.y - v2.y*v1.x);
 }
 
-float length(Vector3 &v)
-{
-    return sqrt((v.x*v.x) + (v.y*v.y) + (v.z*v.z));
-}
-
-
+// calculate a matrix that produces a (rotation over x-axis) transformation
 Matrix3 rotation_x(float angle)
 {
     Matrix3 _m = Matrix3::Identity();
@@ -95,6 +102,7 @@ Matrix3 rotation_x(float angle)
     return _m;
 }
 
+// calculate a matrix that produces a (rotation over y-axis) transformation
 Matrix3 rotation_y(float angle)
 {
     Matrix3 _m = Matrix3::Identity();
@@ -109,6 +117,7 @@ Matrix3 rotation_y(float angle)
     return _m;
 }
 
+// calculate a matrix that produces a (rotation over z-axis) transformation
 Matrix3 rotation_z(float angle)
 {
     Matrix3 _m = Matrix3::Identity();

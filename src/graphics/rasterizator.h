@@ -9,7 +9,7 @@
 //
 struct Camera
 {
-    Vector3 camera_offset;
+    Vector3f camera_offset;
     Matrix3 camera_matrix;
     float focal_length = 5.0f;
 
@@ -18,12 +18,12 @@ struct Camera
     //
     // Perspective project a point depending on the camera (Orientation / Position)
     //
-    Vector4 project(Vector3 v);
+    Vector4f project(Vector3f v);
 
     //
     // change the (Orientation / Position) of the camera
     //
-    void lookAt(Vector3 eye, Vector3 center, Vector3 up);
+    void lookAt(Vector3f eye, Vector3f center, Vector3f up);
 };
 
 //
@@ -60,12 +60,12 @@ public:
     //
     // Draw a line
     //
-    void drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
+    void drawLine(Vector3f &v1, Vector3f &v2, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
 
     //
     // Draw a non-filled Triangle
     //
-    void drawTriangle(Vector3 v1, Vector3 v2, Vector3 v3, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
+    void drawTriangle(Vector3f v1, Vector3f v2, Vector3f v3, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer);
 
     //
     // A Function used to fill a (Transformed/Projected) "Face"
@@ -83,7 +83,7 @@ public:
     // It serves to determine the color of the current pixel,
     // depending on : (Textures / Normal Maps / Lightining, etc)
     //
-    Color FragmentShader(Face& face, Object &o, Camera& camera, Vector3 &bc_world, RenderState& render_state);
+    Color FragmentShader(Face& face, Object &o, Camera& camera, Vector3f &bc_world, RenderState& render_state);
 
     //
     // Render a whole 3D object
@@ -93,7 +93,7 @@ public:
 private:
 
     // viewport
-    Vector3 screen_offset;
+    Vector3f screen_offset;
     int view_scale = 100;
 
     //---------------------------------------------------------------
@@ -104,11 +104,11 @@ private:
     // a matrix that's used for (Tangent space normals mapping)
     Matrix3 tangent_basis;
 
-    Vector3 light_src;
-    Vector4 tri_projected[3];
-    Vector4 tri_screen[3];
-    Vector3 n;    // normal vector
-    Vector2 uv;   // texture coordinates
+    Vector3f light_src;
+    Vector4f tri_projected[3];
+    Vector4f tri_screen[3];
+    Vector3f n;    // normal vector
+    Vector2f uv;   // texture coordinates
 };
 
 #endif // rasterizator_h

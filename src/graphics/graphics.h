@@ -22,13 +22,13 @@ typedef Buffer<float> ZBuffer;
 // Structure holding information of a single point in 3D space
 struct Vertex
 {
-    Vector3 vert;  // vertex position in 3D space
-    Vector2 uv;    // texture coordinates in 2D space (used to map 2D textures into 3D faces)
-    Vector3 norm;  // normal vector (used for lightining)
+    Vector3f vert;  // vertex position in 3D space
+    Vector2f uv;    // texture coordinates in 2D space (used to map 2D textures into 3D faces)
+    Vector3f norm;  // normal vector (used for lightining)
 
     Vertex(){}
     
-    Vertex(Vector3 _vert, Vector2 _uv, Vector3 _norm) : vert(_vert), uv(_uv), norm(_norm) {}
+    Vertex(Vector3f _vert, Vector2f _uv, Vector3f _norm) : vert(_vert), uv(_uv), norm(_norm) {}
 };
 
 // Structure holding information of a (3) point in 3D space
@@ -95,7 +95,7 @@ struct Model
     Array<Face> mesh;
     Buffer<Color> texture_map;
     Buffer<Color> specular_map;
-    Buffer<Vector3> normals_map;
+    Buffer<Vector3f> normals_map;
 
     // useful flags
     bool nm_tangent, flat_shading;
@@ -116,7 +116,7 @@ struct Model
 //
 struct Object
 {
-    Vector3 position;
+    Vector3f position;
     Model* model;
 
     Object() : model(NULL) {}
@@ -132,7 +132,7 @@ class Util
 public:
 
     // normalize an array of 3D Vectors by the longest magnitude
-    static void normalize(Array<Vector3> &mesh);
+    static void normalize(Array<Vector3f> &mesh);
 
     // smmoth an image by taking the average of each 3x3 block
     static void smoothImage(FrameBuffer &buffer);

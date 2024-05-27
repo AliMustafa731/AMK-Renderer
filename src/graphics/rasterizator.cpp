@@ -114,7 +114,7 @@ void Rasterizor::fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer
     }
 
     // filling the rectangle with pixels
-    Vector3 bc_screen, bc_world;
+    Vector3f bc_screen, bc_world;
     Vector2i p;
 
     for (p.x = rect[0]; p.x <= rect[2]; p.x++)
@@ -130,7 +130,7 @@ void Rasterizor::fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer
 
             // apply perspective deformation
             // divide by the 4th component
-            bc_world = Vector3(bc_screen.x / tri_projected[0].w, bc_screen.y / tri_projected[1].w, bc_screen.z / tri_projected[2].w);
+            bc_world = Vector3f(bc_screen.x / tri_projected[0].w, bc_screen.y / tri_projected[1].w, bc_screen.z / tri_projected[2].w);
 
             // normalize, divide by the sum
             bc_world = div(bc_world, (bc_world.x + bc_world.y + bc_world.z));
@@ -152,7 +152,7 @@ void Rasterizor::fillTriangle(Face& face, Object &o, Camera& camera, FrameBuffer
 // It serves to determine the color of the current pixel,
 // depending on : (Textures / Normal Maps / Lightining, etc)
 //
-Color Rasterizor::FragmentShader(Face& face, Object &o, Camera& camera, Vector3 &bc_world, RenderState& render_state)
+Color Rasterizor::FragmentShader(Face& face, Object &o, Camera& camera, Vector3f &bc_world, RenderState& render_state)
 {
     Color c(255, 255, 255);
     float intensity = 0, spec = 0, spec_intensity = 0;
@@ -197,18 +197,18 @@ Color Rasterizor::FragmentShader(Face& face, Object &o, Camera& camera, Vector3 
     }
 
     // current pixel in 3D space
-    Vector3 point = Vector3(
+    Vector3f point = Vector3f(
         face[0].vert.x*bc_world.x + face[1].vert.x*bc_world.y + face[2].vert.x*bc_world.z,
         face[0].vert.y*bc_world.x + face[1].vert.y*bc_world.y + face[2].vert.y*bc_world.z,
         face[0].vert.z*bc_world.x + face[1].vert.z*bc_world.y + face[2].vert.z*bc_world.z
     );
 
-    Vector3 l = normalize(sub(light_src, point)); // The vector from current pixel's point to the light source
+    Vector3f l = normalize(sub(light_src, point)); // The vector from current pixel's point to the light source
     intensity = _max(0.2f, dotProduct(n, l));  // clipp intensity at 0.2
 
     if (render_state._specular_mapping) // specular mapping
     {
-        Vector3 r = normalize(sub(mul(n, dotProduct(n, l) * 2), l)); // reflected light
+        Vector3f r = normalize(sub(mul(n, dotProduct(n, l) * 2), l)); // reflected light
 
         int _x = uv.x*(o.model->specular_map.width() - 1);
         int _y = uv.y*(o.model->specular_map.height() - 1);
@@ -228,7 +228,7 @@ Color Rasterizor::FragmentShader(Face& face, Object &o, Camera& camera, Vector3 
 //
 // Draw a non-filled Triangle
 //
-void Rasterizor::drawTriangle(Vector3 v1, Vector3 v2, Vector3 v3, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer)
+void Rasterizor::drawTriangle(Vector3f v1, Vector3f v2, Vector3f v3, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer)
 {
     drawLine(v1, v2, _c, buffer, zbuffer);
     drawLine(v1, v3, _c, buffer, zbuffer);
@@ -238,7 +238,7 @@ void Rasterizor::drawTriangle(Vector3 v1, Vector3 v2, Vector3 v3, Color _c, Fram
 //
 // Draw a line
 //
-void Rasterizor::drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer)
+void Rasterizor::drawLine(Vector3f &v1, Vector3f &v2, Color _c, FrameBuffer& buffer, ZBuffer& zbuffer)
 {
     bool steep = false;
 
@@ -285,12 +285,12 @@ void Rasterizor::drawLine(Vector3 &v1, Vector3 &v2, Color _c, FrameBuffer& buffe
 //
 // change the (Orientation / Position) of the camera
 //
-void Camera::lookAt(Vector3 eye, Vector3 center, Vector3 up)
+void Camera::lookAt(Vector3f eye, Vector3f center, Vector3f up)
 {
     eye.x = -eye.x;
     eye.y = -eye.y;
 
-    Vector3 x, y, z; // camera basis unit vectors
+    Vector3f x, y, z; // camera basis unit vectors
 
     z = normalize(sub(eye, center));
     x = normalize(crossProduct(z, up));
@@ -308,9 +308,9 @@ void Camera::lookAt(Vector3 eye, Vector3 center, Vector3 up)
 //
 // Perspective project a point depending on the camera (Orientation / Position)
 //
-Vector4 Camera::project(Vector3 v)
+Vector4f Camera::project(Vector3f v)
 {
-    Vector4 _v;
+    Vector4f _v;
 
     if (focal_length != 0.0f)
     {
@@ -320,7 +320,7 @@ Vector4 Camera::project(Vector3 v)
         {
             // apply perspective deformation
             // divide by the 4th component
-            _v = Vector4(v.x / _v.w, v.y / _v.w, v.z / _v.w, _v.w);
+            _v = Vector4f(v.x / _v.w, v.y / _v.w, v.z / _v.w, _v.w);
         }
     }
 

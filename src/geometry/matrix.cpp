@@ -1,7 +1,7 @@
 
 #include "geometry/matrix.h"
 
-
+// matrix multiplication
 Matrix3 mul_matrix(Matrix3 m1, Matrix3 m2)
 {
     Matrix3 _m;
@@ -21,6 +21,8 @@ Matrix3 mul_matrix(Matrix3 m1, Matrix3 m2)
 
     return _m;
 }
+
+// matrix multiplication
 Matrix4 mul_matrix(Matrix4 m1, Matrix4 m2)
 {
     Matrix4 _m;
@@ -77,21 +79,24 @@ Matrix3 transpose(Matrix3 m)
     return _m;
 }
 
-void Matrix3::set_col(int _i, Vector3 v)
+// fill the specified "column" of the matrix with a vector (v)
+void Matrix3::set_col(int _i, Vector3f v)
 {
     m[_i][0] = v.x;
     m[_i][1] = v.y;
     m[_i][2] = v.z;
 }
 
-void Matrix3::set_row(int _i, Vector3 v)
+// fill the specified "row" of the matrix with a vector (v)
+void Matrix3::set_row(int _i, Vector3f v)
 {
     m[0][_i] = v.x;
     m[1][_i] = v.y;
     m[2][_i] = v.z;
 }
 
-void Matrix4::set_col(int _i, Vector4 v)
+// fill the specified "column" of the matrix with a vector (v)
+void Matrix4::set_col(int _i, Vector4f v)
 {
     m[_i][0] = v.x;
     m[_i][1] = v.y;
@@ -99,7 +104,8 @@ void Matrix4::set_col(int _i, Vector4 v)
     m[_i][3] = v.w;
 }
 
-void Matrix4::set_row(int _i, Vector4 v)
+// fill the specified "row" of the matrix with a vector (v)
+void Matrix4::set_row(int _i, Vector4f v)
 {
     m[0][_i] = v.x;
     m[1][_i] = v.y;
@@ -107,6 +113,7 @@ void Matrix4::set_row(int _i, Vector4 v)
     m[3][_i] = v.w;
 }
 
+// return the identity matrix
 Matrix3 Matrix3::Identity()
 {
     Matrix3 m;
@@ -123,6 +130,7 @@ Matrix3 Matrix3::Identity()
     return m;
 }
 
+// return the identity matrix
 Matrix4 Matrix4::Identity()
 {
     Matrix4 m;

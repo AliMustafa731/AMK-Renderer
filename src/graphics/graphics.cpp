@@ -73,9 +73,9 @@ bool Model::loadFromOBJFile(const char* filename)
     }
 
     // reserve temporary memory
-    Array<Vector3>  vertices;      vertices.reserve(numVertices);
-    Array<Vector3>  normals;       normals.reserve(numNorms);
-    Array<Vector2>  uvs;           uvs.reserve(numUV);
+    Array<Vector3f>  vertices;      vertices.reserve(numVertices);
+    Array<Vector3f>  normals;       normals.reserve(numNorms);
+    Array<Vector2f>  uvs;           uvs.reserve(numUV);
     Array<FaceIndex> facesIndex;   facesIndex.reserve(numFaces);
 
     this->nm_tangent = false;
@@ -95,21 +95,21 @@ bool Model::loadFromOBJFile(const char* filename)
         if (!line.compare(0, 2, "v ")) // vertex
         {
             iss >> trash;
-            Vector3 v;
+            Vector3f v;
             iss >> v.x >> v.y >> v.z;
             vertices.add(v);
         }
         else if (!line.compare(0, 3, "vn ")) // normal vector
         {
             iss >> trash >> trash;
-            Vector3 n;
+            Vector3f n;
             iss >> n.x >> n.y >> n.z;
             normals.add(n);
         }
         else if (!line.compare(0, 3, "vt ")) // uv
         {
             iss >> trash >> trash;
-            Vector2 uv;
+            Vector2f uv;
             iss >> uv.x >> uv.y;
             uvs.add(uv);
         }
@@ -191,7 +191,7 @@ bool Model::loadFromOBJFile(const char* filename)
     uvs.release();
     facesIndex.release();
 
-    // convert texture pixels to Vector3 array
+    // convert texture pixels to Vector3f array
     // change the range from [0, 255] into [-1, 1]
     if (normals_texture.data() != NULL)
     {
@@ -199,14 +199,14 @@ bool Model::loadFromOBJFile(const char* filename)
 
         for (int i = 0; i < normals_texture.size(); i++)
         {
-            Vector3 _n;
-            _n = Vector3
+            Vector3f _n;
+            _n = Vector3f
             (
                 (float)normals_texture[i].r / 255.0,
                 (float)normals_texture[i].g / 255.0,
                 (float)normals_texture[i].b / 255.0
             );
-            _n = Vector3((_n.x * 2.0) - 1.0, (_n.y * 2.0) - 1.0, (_n.z * 2.0) - 1.0);
+            _n = Vector3f((_n.x * 2.0) - 1.0, (_n.y * 2.0) - 1.0, (_n.z * 2.0) - 1.0);
             this->normals_map[i] = normalize(_n);
         }
 
@@ -225,7 +225,7 @@ void Model::release()
 }
 
 // normalize an array of 3D Vectors by the longest magnitude in the array
-void Util::normalize(Array<Vector3> &mesh)
+void Util::normalize(Array<Vector3f> &mesh)
 {
     if (mesh.size() == 0) return;
 
@@ -233,7 +233,7 @@ void Util::normalize(Array<Vector3> &mesh)
 
     for (int i = 0; i < mesh.size(); i++)
     {
-        max_length = _max(max_length, length(mesh[i]));
+        max_length = _max(max_length, mesh[i].length());
     }
     for (int j = 0; j < mesh.size(); j++)
     {
