@@ -7,7 +7,6 @@
 #include "graphics/rasterizator.h"
 #include "data/loaders.h"
 #include "common.h"
-#include "program/timer.h"
 
 #include <process.h>
 #include <cmath>
@@ -25,11 +24,6 @@ void load_model_thread(void *args);
 //---------------------------------
 
 Program* Program::main_program;
-
-Object object;
-float angle_y = 0.0f; // angle around Y-axis
-float angle_x = 0.4f; // angle around X-axis
-const char* program_title;
 
 const char* header_txt = "\nBy : Ali Mustafa Kamel\n2022-2023\n\nUse Arrow keys for rotating\nUse W and S for zooming";
 
@@ -50,16 +44,15 @@ Program::Program(const char* name, int _w, int _h)
 void Program::init(const char* name, int _w, int _h)
 {
     // set control flags
-
-    main_program = this;
-    is_running = true;
-    is_loading = false;
-    need_update = true;
+    this->main_program = this;
+    this->is_running = true;
+    this->is_loading = false;
+    this->need_update = true;
 
     // create and register the window
 
     WNDCLASS wc = {0};
-    program_title = name;
+    this->program_title = (char*)name;
 
     wc.lpfnWndProc   = WindowProc;
     wc.hInstance     = GetModuleHandle(NULL);
@@ -67,56 +60,58 @@ void Program::init(const char* name, int _w, int _h)
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     RegisterClass(&wc);
 
-    win_handle = CreateWindowEx
+    this->win_handle = CreateWindowEx
     (
         0, "AMKRenderer", name, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
         CW_USEDEFAULT, CW_USEDEFAULT, _w, _h, NULL, NULL, GetModuleHandle(NULL), NULL
     );
 
-    if(win_handle == NULL)
+    if(this->win_handle == NULL)
     {
         MessageBox(NULL, "Error : can't initialize the program : \"win_handle is NULL\"", "Opss!", MB_OK);
         exit(0);
     }
 
-    ShowWindow(win_handle, SW_SHOW);
-    win_hdc = GetDC(win_handle);
+    ShowWindow(this->win_handle, SW_SHOW);
+    this->win_hdc = GetDC(this->win_handle);
 
     // initialize graphics
 
     RECT rect;
-    GetClientRect(win_handle, &rect);
+    GetClientRect(this->win_handle, &rect);
 
-    width = rect.right - 200;
-    height = rect.bottom;
-    frameBuffer.init(width, height);
-    background.init(width, height);
-    zbuffer.init(width, height);
+    this->width = rect.right - 200;
+    this->height = rect.bottom;
+    this->frameBuffer.init(width, height);
+    this->background.init(width, height);
+    this->zbuffer.init(width, height);
 
-    bitmap_info.bmiHeader.biSize = sizeof(bitmap_info.bmiHeader);
-    bitmap_info.bmiHeader.biWidth = width;
-    bitmap_info.bmiHeader.biHeight = height;
-    bitmap_info.bmiHeader.biPlanes = 1;
-    bitmap_info.bmiHeader.biBitCount = 32;
-    bitmap_info.bmiHeader.biCompression = BI_RGB;
+    this->bitmap_info.bmiHeader.biSize = sizeof(bitmap_info.bmiHeader);
+    this->bitmap_info.bmiHeader.biWidth = width;
+    this->bitmap_info.bmiHeader.biHeight = height;
+    this->bitmap_info.bmiHeader.biPlanes = 1;
+    this->bitmap_info.bmiHeader.biBitCount = 32;
+    this->bitmap_info.bmiHeader.biCompression = BI_RGB;
 
-    timer_init();
+    this->timerInit();
 
     // setting up the background
 
     for(int i = 0 ; i < frameBuffer.size() ; i++)
     {
         Color c = Color(160, 160, 160);
-        background[i] = c;
-        frameBuffer[i] = c;
-        zbuffer[i] = -FLT_MAX;  // set to a small value
+        this->background[i] = c;
+        this->frameBuffer[i] = c;
+
+        // reset the depth map (z-buufer) to very small value
+        this->zbuffer[i] = -FLT_MAX;
     }
 
     // load a test 3D model
 
-    camera.lookAt(Vector3f(0, 0, 5), Vector3f(0, 0, 0), Vector3f(0, 1, 0));
-    object.position = Vector3f(0.0, 0.0, 0.0);
-    object.model = &main_model;
+    this->camera.lookAt(Vector3f(0, 0, 5), Vector3f(0, 0, 0), Vector3f(0, 1, 0));
+    this->object.position = Vector3f(0.0, 0.0, 0.0);
+    this->object.model = &this->main_model;
 
     this->loadMainModel("brick.obj");
 
@@ -144,7 +139,7 @@ void Program::update()
 
     if (is_loading)
     {
-        frameRateLimit();
+        frameRateLimit(60.0f);
         return;
     }
 
@@ -201,7 +196,7 @@ void Program::update()
     }
 
     // limiting the FPS
-    frameRateLimit();
+    frameRateLimit(60.0f);
 }
 
 void Program::clearFrameBuffer()
@@ -209,7 +204,9 @@ void Program::clearFrameBuffer()
     for (int i = 0; i < frameBuffer.size(); i++)
     {
         frameBuffer[i] = background[i];
-        zbuffer[i] = -FLT_MAX;  // set to a small value
+
+        // reset the depth map (z-buufer) to very small value
+        zbuffer[i] = -FLT_MAX;
     }
 }
 
@@ -504,4 +501,35 @@ int Program::SaveFileDialog(const char* filter, const char* default_ext, const c
     ofn.Flags = OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT;
 
     return GetSaveFileName(&ofn);
+}
+
+//--------------------------------------
+//   Timer & frame-rate limiting
+//--------------------------------------
+
+void Program::timerInit()
+{
+    LARGE_INTEGER timer_freq;
+    QueryPerformanceFrequency(&timer_freq);
+    timer_frequency = (float)timer_freq.QuadPart / 1000.0f;
+}
+
+void Program::frameRateLimit(float fps)
+{
+    int frame_time = (1.0f / fps) * 1000.0f; // time needed for one frame (in milliseconds)
+
+    QueryPerformanceCounter(&last);
+
+    float delta = (float)(last.QuadPart - first.QuadPart) / timer_frequency;
+    float result = frame_time - delta;
+
+    std::string txt = "AMK Renderer " + std::to_string((int)delta) + " ms";
+    SetWindowText(Program::main_program->WindowHandle(), txt.c_str());
+
+    if (result > 0)
+    {
+        Sleep(result);
+    }
+
+    QueryPerformanceCounter(&first);
 }

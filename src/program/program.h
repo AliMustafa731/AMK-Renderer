@@ -63,6 +63,16 @@ public:
 
 private:
 
+    //-----------------------------------------
+    // timer (used to limit the frame-rate)
+    //-----------------------------------------
+    void frameRateLimit(float fps);
+    void timerInit();
+
+    float timer_frequency;
+    LARGE_INTEGER first = { 0 };
+    LARGE_INTEGER last = { 0 };
+
     // control flags
     bool is_running, is_loading, need_update;
 
@@ -75,7 +85,11 @@ private:
     int width, height;
     ZBuffer zbuffer;
     FrameBuffer frameBuffer, background;
+
     Model main_model;
+    Object object;
+    float angle_y = 0.0f; // angle around Y-axis
+    float angle_x = 0.4f; // angle around X-axis
 
     // windows specific handles
     HDC win_hdc;
@@ -85,6 +99,7 @@ private:
 
     // used to hold the path returned from OpenFileDialog & SaveFileDialog
     char explorer_file_path[MAX_PATH];
+    char* program_title;
 };
 
 #endif // program_h

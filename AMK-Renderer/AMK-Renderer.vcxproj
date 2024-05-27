@@ -30,7 +30,6 @@
     <ClInclude Include="..\src\graphics\graphics.h" />
     <ClInclude Include="..\src\graphics\rasterizator.h" />
     <ClInclude Include="..\src\program\program.h" />
-    <ClInclude Include="..\src\program\timer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\data\loaders.cpp" />
